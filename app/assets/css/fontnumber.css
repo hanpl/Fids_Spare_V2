@@ -1,0 +1,19 @@
+@font-face {
+    font-family: 'DigitalClock';
+    src: url('@/assets/fonts/digital-7.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+  }
+  
+    .digital-clock {
+        font-family: 'DigitalClock', sans-serif;
+        font-size: 8.8vw;
+        color: white;
+        text-align: center;
+        /* letter-spacing: 0.1em; */
+        /* padding-left: 0.1em; */
+        border-radius: 8px;
+        white-space: nowrap;
+        padding-top: 6.5vh;
+        margin-right: 2px;
+    }
