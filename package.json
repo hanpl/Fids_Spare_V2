@@ -1,0 +1,21 @@
+{
+  "name": "fids-spare-v2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
+    "date-fns": "^3.6.0",
+    "nuxt": "^3.12.4",
+    "vue": "latest"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.14.0"
+  }
+}
