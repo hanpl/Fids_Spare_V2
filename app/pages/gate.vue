@@ -9,47 +9,29 @@
       </div>
     </div>
 
-    <div class="mainboard form-group row styleFromcontrol">
-      <div class="col-sm-6">
-        <div class="row" style="padding-left: 5vw;">
-          <div class="timemcdt">
-            <span>FLIGHT</span>
-            <span class="mcdt">{{ currentFlight.flight }}</span>
-          </div>
+    <div class="mainboard">
+      <!-- Left column: FLIGHT + CITY TO -->
+      <div class="col-info left-col">
+        <div class="timemcdt">
+          <span>FLIGHT</span>
+          <span class="mcdt">{{ currentFlight.flight }}</span>
         </div>
-        <div class="row" style="padding-left: 5vw;">
-          <div class="timemcdt">
-            <span>CITY TO</span>
-            <span class="mcdt">{{ getFullCityName(currentFlight.city) }}</span>
-          </div>
-        </div>
-        <div class="row" style="padding-left: 5vw;">
-          <div class="timemcdt">
-            <span>STATUS</span>
-            <span class="mcdt">{{ currentFlight.remark }}</span>
-          </div>
-        </div>
-        <div class="row" style="padding-left: 5vw;">
-          <div class="timemcdt">
-            <span>NOTE</span>
-            <span class="mcdt"></span>
-          </div>
+        <div class="timemcdt">
+          <span>CITY TO</span>
+          <span class="mcdt">{{ getFullCityName(currentFlight.city) }}</span>
         </div>
       </div>
 
-      <div class="col-sm-6">
-        <div class="row">
-          <div class="col-sm-6 timemcdt">
-            <span>TIME</span>
-            <span class="mcdt">{{ getTimeMcdt(currentFlight.mcdt) }}</span>
-          </div>
-          <div class="col-sm-6 timemcdt">
-            <span></span>
-            <span class="mcdt">{{ gettemprate(currentFlight.city) }}</span>
-          </div>
+      <!-- Right column: TIME + STATUS + Airline Logo -->
+      <div class="col-info right-col">
+        <div class="timemcdt">
+          <span>TIME</span>
+          <span class="mcdt">{{ getTimeMcdt(currentFlight.mcdt) }}</span>
         </div>
-
-        <!-- ← THAY ĐỔI: dùng logoUrl từ API thay vì src cứng -->
+        <div class="timemcdt">
+          <span>STATUS</span>
+          <span class="mcdt status-value">{{ currentFlight.remark }}</span>
+        </div>
         <div class="logoairline">
           <img v-if="airlineLogoUrl"
             :src="airlineLogoUrl"
@@ -67,14 +49,13 @@
     </div>
   </div>
 
-  <!-- Fallback khi không có chuyến bay -->
   <div v-else>
-    <img  alt="Vuelogo" :src="`/img/fullscreen/AHT_1920x1080.png?timestamp=${new Date().getTime()}`" />
+    <img alt="Vuelogo" :src="`/img/fullscreen/AHT_1920x1080.png?timestamp=${new Date().getTime()}`" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { format } from 'date-fns'
 import * as signalR from '@microsoft/signalr'
 
@@ -84,8 +65,6 @@ const timeLoadFlight  = 40
 
 definePageMeta({ layout: 'checkinlayout' })
 
-// ── useAirlineLogos ──────────────────────────────────────
-// Dùng FullScreen vì đây là màn hình gate hiển thị toàn màn hình
 const { loadAll, getLogoUrl } = useAirlineLogos('FullScreen')
 
 interface Flight {
@@ -106,21 +85,16 @@ const countries     = reactive({
   ]
 })
 
-// ── Logo URL tự động cập nhật khi currentFlight thay đổi ─
 const airlineLogoUrl = computed(() => {
   if (!currentFlight.value?.lineCode) return ''
-  const url = getLogoUrl(currentFlight.value.lineCode)
-  console.log(`[Gate] lineCode: ${currentFlight.value.lineCode} → ${url || 'KHÔNG CÓ'}`)
-  return url
+  return getLogoUrl(currentFlight.value.lineCode)
 })
 
 function onLogoError(e: Event) {
-  console.warn('[Gate] Lỗi load logo:', airlineLogoUrl.value)
   const img = e.target as HTMLImageElement
   img.src = '/img/fullscreen/AHT_1920x1080.png'
 }
 
-// ── Fetch flights ─────────────────────────────────────────
 const fetchFlights = async () => {
   try {
     const data = await $fetch<Flight[]>(`${config.public.apiBase}/Gate`)
@@ -144,7 +118,6 @@ const checkCurrentFlight = () => {
     const timeAfter  = new Date(mcdtDate.getTime() +  20 * 60 * 1000)
     return now >= timeBefore && now <= timeAfter
   })
-
   if (filtered.length > 0) {
     filtered.sort((a, b) => parseDate(a.mcdt).getTime() - parseDate(b.mcdt).getTime())
     currentFlight.value = filtered[0] ?? null
@@ -162,8 +135,6 @@ const getTimeMcdt = (mcdt: string): string => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-const gettemprate = (_city: string): string => ''
-
 const loadCityMap = async () => {
   try {
     const data = await $fetch<any[]>(`${config.public.apiBase}/Countries`)
@@ -178,13 +149,13 @@ const getFullCityName = (shortCode: string): string => {
   return airport ? airport.nameAirport : 'Not Found'
 }
 
-// ── SignalR ───────────────────────────────────────────────
-const intervalId   = ref<number | null>(null)
+const intervalId    = ref<number | null>(null)
 const hubConnection = ref<signalR.HubConnection | null>(null)
 
 const connectHub = async () => {
   hubConnection.value = new signalR.HubConnectionBuilder()
     .withUrl(`${config.public.urlHub}`)
+    .withAutomaticReconnect()
     .configureLogging(signalR.LogLevel.Information)
     .build()
   try {
@@ -218,78 +189,36 @@ const startInterval = () => {
   intervalId.value = window.setInterval(reconnectHub, 30000)
 }
 
-// ── onMounted ─────────────────────────────────────────────
+const checkIntervalId  = ref<number | null>(null)
+const fetchIntervalId  = ref<number | null>(null)
+const dateIntervalId   = ref<number | null>(null)
+
 onMounted(async () => {
   if (intervalId.value !== null) {
     clearInterval(intervalId.value)
     intervalId.value = null
   }
-  await loadAll()         
+  await loadAll()
   await connectHub()
   await fetchFlights()
   await loadCityMap()
 
-  getdatefooter()          // ← gọi có () mới chạy được
-  setInterval(getdatefooter,     1000)
-  setInterval(checkCurrentFlight, timeCheckFlight * 1000)
-  setInterval(fetchFlights,       timeLoadFlight  * 1000)
+  getdatefooter()
+  dateIntervalId.value  = window.setInterval(getdatefooter,      1000)
+  checkIntervalId.value = window.setInterval(checkCurrentFlight, timeCheckFlight * 1000)
+  fetchIntervalId.value = window.setInterval(fetchFlights,       timeLoadFlight  * 1000)
 })
 
-console.log('[Gate] script setup END — waiting for onMounted')
+onUnmounted(() => {
+  if (intervalId.value)    clearInterval(intervalId.value)
+  if (dateIntervalId.value)  clearInterval(dateIntervalId.value)
+  if (checkIntervalId.value) clearInterval(checkIntervalId.value)
+  if (fetchIntervalId.value) clearInterval(fetchIntervalId.value)
+  hubConnection.value?.stop()
+})
 </script>
-  
-  <style scoped>
 
-
-.mainboard {
-    width: 100%;
-    display: flex;
-    overflow: hidden;
-    position: relative;
-    height: 73.3vh;
-    background-color: #283b92;
-    margin-right: 0px !important;
-    margin-left: 0px !important;
-}
-
-.logoairline {
-    width: 99%;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #fff;
-    border-radius: 3px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    margin-top: 4vh;
-}
-
-.logoairline img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
-
-.timemcdt {
-    display: flex;
-    flex-direction: column;
-    color: #36c0c7;
-    font-size: 3.8vh;
-    align-items: flex-start;
-    margin-top: 5vh;
-    font-weight: 700;
-}
-
-span.mcdt {
-  font-size: 11vh;
-    padding-top: 5vh;
-    padding-bottom: 4vh;
-    color: white;
-    font-weight: 700;
-}
-
+<style scoped>
 .header {
     background-color: #ffffff;
     display: flex;
@@ -324,5 +253,88 @@ p {
     font-weight: 700;
     font-size: 5.2vw;
 }
-  </style>
-  
+
+/* ── Mainboard ─────────────────────────────── */
+.mainboard {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 73.3vh;
+    background-color: #283b92;
+    overflow: hidden;
+}
+
+.col-info {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    padding-top: 1vh;
+}
+
+.left-col  { padding-left: 5vw; }
+.right-col { padding-left: 2vw; padding-right: 1vw; }
+
+.timemcdt {
+    display: flex;
+    flex-direction: column;
+    color: #36c0c7;
+    font-size: 3.8vh;
+    align-items: flex-start;
+    margin-top: 3vh;
+    font-weight: 700;
+}
+
+span.mcdt {
+    font-size: 11vh;
+    padding-top: 2vh;
+    padding-bottom: 2vh;
+    color: white;
+    font-weight: 700;
+}
+
+/* STATUS value smaller so logo gets more room */
+span.mcdt.status-value {
+    font-size: 7vh;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+}
+
+/* ── Airline Logo ──────────────────────────── */
+.logoairline {
+    flex: 1;          /* fill remaining height in right-col */
+    min-height: 0;    /* required for flex child to shrink */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 3px;
+    margin-top: 2vh;
+    margin-bottom: 2vh;
+    overflow: hidden;
+}
+
+.logoairline img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;   /* keep full logo visible, no crop */
+    display: block;
+}
+
+/* ── Footer ────────────────────────────────── */
+.footer {
+    background-color: #36c0c7;
+    width: 100vw;
+    height: 6.6vh;
+    position: fixed;
+    bottom: 0;
+    padding: 5px;
+}
+p.date {
+    color: #2b388f;
+    padding-right: 4vw;
+    font-size: 3.5vh;
+    float: right;
+    padding-top: 1.8vh;
+    font-weight: 600;
+}
+</style>
