@@ -117,7 +117,7 @@ const receiverUpdate= () => {
         ? (!data.eco ? `${data.autoImg}_1920x1080.png` : `${data.eco}`)
         : (!data.bus ? `${data.autoImg}_1920x1080.png` : `${data.bus}`);
         showImgManual.value = !data.manual ? `${data.autoImg}_1920x1080.png` : `${data.manual}`;
-        showImghafl.value = !`${data.nomal}` || `${data.nomal}` === null ? `${data.autoImg}_1920x480.png` : `${data.nomal}`;
+        showImghafl.value = !data.nomal || data.nomal === 'null' ? `${data.autoImg}_1920x480.png` : data.nomal
         startCheckingFlights();
     });
 }
