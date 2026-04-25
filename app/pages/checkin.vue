@@ -72,7 +72,7 @@ const countries = reactive({
   ]});
 
 const currentIndex = ref<number>(0);
-let intervalIdaht: NodeJS.Timeout | null = null;
+let intervalIdaht = ref<number | null>(null);
 const changeImage = () => {
   currentIndex.value = (currentIndex.value + 1) % images.value.length;
 };
@@ -235,18 +235,21 @@ onMounted(async () => {
   }
   await connectHub();
   loadCityMap();
-  intervalIdaht = setInterval(changeImage, 15000);
+  intervalIdaht.value = window.setInterval(changeImage, 15000);
 });
 
 onUnmounted(() => {
     stopCheckingFlights();
     if (intervalId.value) clearInterval(intervalId.value);
-    if (hubConnection.value) {
-    hubConnection.value.stop().then(() => {
-    });
+    if (hubConnection.value) 
+    {
+      hubConnection.value.stop().then(() => {});
     }
-
-    if (intervalIdaht) clearInterval(intervalIdaht);
+    if (intervalIdaht.value !== null) 
+    {
+      clearInterval(intervalIdaht.value)
+      intervalIdaht.value = null
+    }
 
 });
 </script>
