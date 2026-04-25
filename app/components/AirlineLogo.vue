@@ -23,9 +23,7 @@ const props = defineProps<{
 const { getLogoUrl } = useAirlineLogos()
 
 const logoUrl = computed(() => {
-  const url = getLogoUrl(props.lineCode)
-  console.log(`[AirlineLogo] lineCode: ${props.lineCode} → url: ${url || 'KHÔNG CÓ'}`)
-  return url
+  return getLogoUrl(props.lineCode)
 })
 
 function onError(e: Event) {

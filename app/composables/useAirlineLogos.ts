@@ -8,7 +8,6 @@
  *   const { loadAll, getLogoUrl } = useAirlineLogos('HalfScreen')
  */
 export const useAirlineLogos = (location: string = 'FIDs') => {
-  console.log(`[useAirlineLogos] initialized with location: "${location}"`)
   const config    = useRuntimeConfig()
   const ASSET_API = config.public.apiBase
 
@@ -20,14 +19,12 @@ export const useAirlineLogos = (location: string = 'FIDs') => {
   async function loadAll() {
   if (cacheReady.value || loading.value) return
   loading.value = true
-  console.log(`[useAirlineLogos:${location}] Fetching → ${ASSET_API}/airlines`)
 
   try {
     const res = await $fetch<any>(`${ASSET_API}/airlines`)
 
     // API trả về flat array, không có wrapper { data: [] }
     const rows: any[] = Array.isArray(res) ? res : (res?.data || [])
-    console.log(`[useAirlineLogos:${location}] Total rows: ${rows.length}`)
 
     const map: Record<string, string> = {}
 
@@ -42,12 +39,10 @@ export const useAirlineLogos = (location: string = 'FIDs') => {
       if (!code) return
 
       map[code] = row.ImageUrl
-      console.log(`[useAirlineLogos:${location}] ✓ ${code} → ${row.ImageUrl}`)
     })
 
     logoCache.value  = map
     cacheReady.value = true
-    console.log(`[useAirlineLogos:${location}] ✅ Done — ${Object.keys(map).length} logos`)
 
   } catch (err: any) {
     console.error(`[useAirlineLogos:${location}] ❌ Error:`, err?.message || err)

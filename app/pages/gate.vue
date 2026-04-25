@@ -17,21 +17,31 @@
           <span class="mcdt">{{ currentFlight.flight }}</span>
         </div>
         <div class="timemcdt">
-          <span>CITY TO</span>
+          <span>DEPARTING TO</span>
           <span class="mcdt">{{ getFullCityName(currentFlight.city) }}</span>
+        </div>
+        <div class="timemcdt">
+          <span>REMARKS</span>
+          <span 
+            class="mcdt status-value"
+            :class="currentFlight.remark === 'Delayed' ? 'text-yellow-400' : 'text-cyan-400'">
+            {{ currentFlight.remark }}
+          </span>
+        </div>
+
+        <div class="timemcdt">
+          <span>COMMENTS</span>
+          <span class="mcdt status-value">{{ currentFlight.comments }}</span>
         </div>
       </div>
 
       <!-- Right column: TIME + STATUS + Airline Logo -->
       <div class="col-info right-col">
         <div class="timemcdt">
-          <span>TIME</span>
+          <span>DEPARTURE TIME</span>
           <span class="mcdt">{{ getTimeMcdt(currentFlight.mcdt) }}</span>
         </div>
-        <div class="timemcdt">
-          <span>STATUS</span>
-          <span class="mcdt status-value">{{ currentFlight.remark }}</span>
-        </div>
+        
         <div class="logoairline">
           <img v-if="airlineLogoUrl"
             :src="airlineLogoUrl"
@@ -72,7 +82,7 @@ interface Flight {
   actual: string; lineCode: string; flight: string; city: string
   gate: string; remark: string; status: string; rowFrom: string; rowTo: string
   checkInCounters: string; counterStart: string; counterEnd: string
-  gateStart: string; gateEnd: string; mcdt: string
+  gateStart: string; gateEnd: string; mcdt: string, comments: string
 }
 
 const flights       = ref<Flight[]>([])
@@ -160,13 +170,11 @@ const connectHub = async () => {
     .build()
   try {
     await hubConnection.value.start()
-    console.log('[Gate] SignalR connected')
   } catch (err) {
     console.error('[Gate] SignalR failed:', err)
     startInterval()
   }
   hubConnection.value.onclose(() => {
-    console.log('[Gate] Connection closed')
     startInterval()
   })
 }
@@ -174,7 +182,6 @@ const connectHub = async () => {
 const reconnectHub = async () => {
   try {
     await hubConnection.value?.start()
-    console.log('[Gate] SignalR reconnected')
     if (intervalId.value !== null) {
       clearInterval(intervalId.value)
       intervalId.value = null
@@ -225,7 +232,7 @@ onUnmounted(() => {
     flex-direction: row;
     align-items: center;
     padding: 0px 0.5rem;
-    height: 20vh;
+    height: 19vh;
 }
 .logoaht {
     max-height: 100%;
@@ -259,7 +266,7 @@ p {
     display: flex;
     flex-direction: row;
     width: 100%;
-    height: 73.3vh;
+    height: 75vh;
     background-color: #283b92;
     overflow: hidden;
 }
@@ -271,25 +278,26 @@ p {
     padding-top: 1vh;
 }
 
-.left-col  { padding-left: 5vw; }
+.left-col  { padding-left: 2vw; }
 .right-col { padding-left: 2vw; padding-right: 1vw; }
 
 .timemcdt {
     display: flex;
     flex-direction: column;
     color: #36c0c7;
-    font-size: 3.8vh;
+    font-size: 4.2vh;
     align-items: flex-start;
-    margin-top: 3vh;
-    font-weight: 700;
+    margin-top: 2vh;
+    font-weight: 750;
 }
 
 span.mcdt {
     font-size: 11vh;
-    padding-top: 2vh;
-    padding-bottom: 2vh;
+    padding-top: 0vh;
+    padding-bottom: 0vh;
     color: white;
-    font-weight: 700;
+    font-weight: 750;
+    line-height: 1;
 }
 
 /* STATUS value smaller so logo gets more room */
@@ -297,6 +305,7 @@ span.mcdt.status-value {
     font-size: 7vh;
     padding-top: 1vh;
     padding-bottom: 1vh;
+    color: rgb(3, 216, 3);
 }
 
 /* ── Airline Logo ──────────────────────────── */
@@ -324,7 +333,7 @@ span.mcdt.status-value {
 .footer {
     background-color: #36c0c7;
     width: 100vw;
-    height: 6.6vh;
+    height: 6vh;
     position: fixed;
     bottom: 0;
     padding: 5px;
@@ -332,9 +341,9 @@ span.mcdt.status-value {
 p.date {
     color: #2b388f;
     padding-right: 4vw;
-    font-size: 3.5vh;
+    font-size: 4vh;
     float: right;
-    padding-top: 1.8vh;
+    padding-top: 0vh;
     font-weight: 600;
 }
 </style>
