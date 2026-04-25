@@ -100,7 +100,7 @@ const connectHub = async () => {
 const receiverUpdate= () => {
 {
     // Lắng nghe sự kiện "SendToClient" từ server
-    hubConnection.value!.off("SendToClient"); // <-- gỡ cũ trước
+    hubConnection.value!.off("SendToClient");
     hubConnection.value!.on("SendToClient", (data: any) => {
         timeStart.value = new Date(`${data.openTime}`);
         timeClose.value = new Date(`${data.closeTime}`);
