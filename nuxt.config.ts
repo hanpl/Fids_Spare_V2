@@ -12,7 +12,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: 'AHT Asset Hub',
+      title: 'AHT Fids Spare',
       meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }]
     }
   }

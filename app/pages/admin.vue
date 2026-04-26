@@ -12,13 +12,14 @@
             <button @click="togglePicker">
               <i class="fas fa-calendar-alt" @click="openPicker"></i>
             </button>
-            <vue3-datepicker
-              v-show="showPicker"
-              v-model="datePickerValue"
-              @update:modelValue="onDateChange"
-              type="datetime"
-              :format="dateFormat"
-            />
+            <ClientOnly>
+              <vue3-datepicker
+                v-show="showPicker"
+                v-model="datePickerValue"
+                @update:modelValue="onDateChange"
+                type="datetime"
+                :format="dateFormat"/>
+            </ClientOnly>
           </div>
           <h1 style="text-align: center;" >{{ datetitle }}</h1>
         </div>
@@ -82,12 +83,44 @@
         </div>
 
 
-
+      <!-- Image Management Panel -->
+      <div style="margin-top: 8px; border:1px solid #ccc; border-radius:4px; overflow:hidden;">
+        <div class="cardheader" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+            @click="showImageMgr = !showImageMgr">
+          <h3 class="cardtitle" style="font-size:15px;margin:0;">Quản lý hình ảnh</h3>
+          <span style="color:white;">{{ showImageMgr ? '▲' : '▼' }}</span>
+        </div>
+        <div v-show="showImageMgr" style="padding:8px;background:white;">
+          <label style="font-size:13px;font-weight:bold;color:black;display:block;margin-bottom:3px;">Hãng bay</label>
+          <select v-model="selectedAirline" @change="onAirlineSelect"
+                  style="width:100%;height:28px;font-size:13px;border:1px solid #ced4da;border-radius:4px;padding:0 4px;margin-bottom:6px;">
+            <option value="">-- Chọn hãng bay --</option>
+            <option v-for="img in imageList" :key="img.id" :value="img">{{ img.name }}</option>
+          </select>
+          <div v-if="editImage">
+            <div v-for="field in ['nomal','eco','bus','manual']" :key="field"
+                style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">
+              <label style="width:52px;font-size:12px;font-weight:bold;color:black;text-transform:capitalize;flex-shrink:0;">
+                {{ field }}
+              </label>
+              <input v-model="editImage[field]"
+                    style="flex:1;height:24px;font-size:12px;border:1px solid #ced4da;border-radius:3px;padding:0 4px;"
+                    :placeholder="field + '.png'" />
+            </div>
+            <button @click="saveImageConfig" class="btnn btn-info" style="margin-top:6px;width:100%;font-size:13px;">
+              Lưu
+            </button>
+          </div>
+        </div>
+      </div>
 
         <div class="headertitle">
           <flightInfor :flightData="propsValue" @result="handleResult" />
         </div>
       </div>
+
+
+
       <div class="rowmain" style="display: flex;">
         <div style="width: 79vw; padding: 0 5px;">
           
@@ -217,8 +250,7 @@
 <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
   import { parse, format } from 'date-fns'
-  import jQuery from 'jquery';
-  import Vue3Datepicker from 'vue3-datepicker';
+  // import Vue3Datepicker from 'vue3-datepicker';
   import flightInfor from './flightInfor.vue';
   import * as signalR from "@microsoft/signalr";
   
@@ -230,10 +262,7 @@
   const urlCheckinCounter = 'https://localhost:7079/api/CheckinCounter/';
   const urlFlight = 'https://localhost:7079/api/CheckinCounter';
 
-
-  
-  const $ = jQuery;
-  const position = ref(10);
+  const Vue3Datepicker = defineAsyncComponent(() => import('vue3-datepicker'))
   const thumbWidth = 13000/1440;
   const propsValue = ref({
     id: "",scheduledDate: "",schedule: "",estimated: "",actual: "",lineCode: "",flight: "",city:"",gate: "",remark: "",
@@ -400,7 +429,9 @@ const onDateChange = (date: Date | null | undefined) => {
       throw new Error('Invalid datetime format: ' + datetime);
     }
     const scheduleDate = dateParts[0];
-    
+    if (!scheduleDate) {
+      return "0";
+    }
     //console.log(scheduleDate + " " + today + " " + datetime);
     const parsedDate1 = parse(scheduleDate, 'd/M/yyyy', new Date());
     const parsedDate2 = parse(today, 'd/M/yyyy', new Date());
@@ -547,7 +578,7 @@ const formatDate12 = (date: Date) => {
 };
 
 
-const numberArray = ref([]);
+const numberArray = ref<number[]>([]);
 function handleResult(updatedData:any) {
   numberArray.value = updatedData.checkInCounters.split(',')
       .filter((item: string) => !isNaN(Number(item))) 
@@ -569,17 +600,19 @@ function handleResult(updatedData:any) {
         }
       const date = formatDate(parse(updatedData.schedule, 'dd/MM/yyyy h:mm:ss a', new Date()));
       fetchDatanew(formattedDate);
-      if(numberArray.value[0] <=27)
+      const firstCounter = numberArray.value[0] ?? 0;
+
+      if(firstCounter <=27)
       {
         fetchData(formattedDate, "A");
         fetchDataMa(formattedDate, "MA");
       }
-      if(numberArray.value[0] >27)
+      if(firstCounter >27)
       {
         fetchDataB(formattedDate, "B");
         fetchDataMb(formattedDate, "MB");
       }
-      if(numberArray.value.length = 1)
+      if(numberArray.value.length === 1)
       {
         fetchDatanew(formattedDate);
         fetchData(formattedDate, "A");
@@ -663,19 +696,20 @@ const fetchDataMb = (data:string, local:string) => {
 };
 
 function onInputFocus(field: string, index: number) {
-  $('.edit'+index).removeClass('hiden');
-  $('.check'+index).addClass('hiden');
+  document.querySelector('.edit' + index)?.classList.remove('hiden');
+  document.querySelector('.check' + index)?.classList.add('hiden');
 };
 
 function onEditClick(index: number) {
-  if((dailyairline.flights[index].rowFrom > dailyairline.flights[index].rowTo)&&(dailyairline.flights[index].rowTo != ""))
+  const flight = dailyairline.flights[index];
+  if (!flight) return;
+  if((flight.rowFrom > flight.rowTo)&&(flight.rowTo != ""))
   {
     alert("RowTo not availble!");
   }else
   {
-    $('.check'+index).removeClass('hiden');
-    $('.edit'+index).addClass('hiden');
-    //console.log(dailyairline.flights[index].rowTo );
+    document.querySelector('.check' + index)?.classList.remove('hiden');
+    document.querySelector('.edit' + index)?.classList.add('hiden');
   }
 };
 
@@ -692,9 +726,9 @@ function onEditClick(index: number) {
 
   function subtractMinutes(dateString: string, minutes: number): string {
     // Parse the input date string to a Date object
-    const [datePart, timePart, period] = dateString.split(' ');
-    const [day, month, year] = datePart.split('/').map(Number);
-    const [hour, minute, second] = timePart.split(':').map(Number);
+    const [datePart = '', timePart = '', period = ''] = dateString.split(' ');
+    const [day = 0, month = 0, year = 0] = datePart.split('/').map(Number);
+    const [hour = 0, minute = 0, second = 0] = timePart.split(':').map(Number);
     // Adjust hour for AM/PM period
     let hours24 = hour % 12; // Convert 12-hour format to 24-hour format
     if (period === 'PM') {
@@ -715,20 +749,6 @@ function onEditClick(index: number) {
     return `${newDatePart} ${String(newHour12).padStart(2, '0')}:${newMinute}:${newSecond} ${newPeriod}`;
   }
   // Lắng nghe sự kiện cuộn
-  window.addEventListener('scroll', function() {
-            const rowheaderA = document.getElementsByClassName('rowheaderA');
-            if (window.scrollY > 30) {
-                // Nếu cuộn quá 30px thì đặt top về 0px
-                $(rowheaderA).removeClass('fixtop5');
-                $(rowheaderA).addClass('fixtop0');
-                
-            } else {
-                // Ngược lại đặt lại top về 20px
-                $(rowheaderA).removeClass('fixtop0');
-                $(rowheaderA).addClass('fixtop5');
-                
-            }
-  });
 
   //SignR Connect
   const hubConnection = ref<signalR.HubConnection | null>(null);
@@ -847,6 +867,7 @@ const formatDate = (date: Date): string => {
     fetchDataMa(formatDate(date), "MA");
     fetchDataB(formatDate(date), "B");
     fetchDataMb(formatDate(date), "MB");
+    fetchImageList();
   });
   onUnmounted(() => {
     if (intervalId.value !== null) {
@@ -858,6 +879,60 @@ const formatDate = (date: Date): string => {
       });
     }
   });
+
+  onMounted(() => {
+  window.addEventListener('scroll', function() {
+    const rowheaderA = document.getElementsByClassName('rowheaderA');
+    if (window.scrollY > 30) {
+      Array.from(rowheaderA).forEach(el => {
+        el.classList.remove('fixtop5');
+        el.classList.add('fixtop0');
+      });
+    } else {
+      Array.from(rowheaderA).forEach(el => {
+        el.classList.remove('fixtop0');
+        el.classList.add('fixtop5');
+      });
+    }
+  });
+});
+
+
+const urlImageForFlight = 'https://localhost:7079/api/ImageForFlight'
+const imageList = ref<any[]>([])
+const selectedAirline = ref<any>('')
+const editImage = ref<any>(null)
+const showImageMgr = ref(false)
+
+const onAirlineSelect = () => {
+  editImage.value = selectedAirline.value ? { ...selectedAirline.value } : null
+}
+
+const fetchImageList = () => {
+  fetch(urlImageForFlight)
+    .then(r => r.json())
+    .then(data => { imageList.value = data })
+    .catch(err => console.error('[ImageMgr]', err))
+}
+
+const saveImageConfig = async () => {
+  if (!editImage.value) return
+  try {
+    const res = await fetch(urlImageForFlight, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editImage.value),
+    })
+    if (res.ok) {
+      await fetchImageList()
+      editImage.value = null
+      selectedAirline.value = ''
+    }
+  } catch (err) { console.error('[ImageMgr] save error:', err) }
+}
+
+
+
 
   
 
@@ -1136,5 +1211,11 @@ input.SearchBar_input__somiR {
     top: 6%;
     border-radius: 8px;
     color: black;
+}
+
+.headerfix {
+    /* existing styles */
+    overflow-y: auto;
+    max-height: 92vh;
 }
 </style>

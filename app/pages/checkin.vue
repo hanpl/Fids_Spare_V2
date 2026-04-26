@@ -80,21 +80,22 @@ const changeImage = () => {
 
 const hubConnection = ref<signalR.HubConnection | null>(null);
 const connectHub = async () => {
-  const url = urlHub;
   hubConnection.value = new signalR.HubConnectionBuilder()
-      .withUrl(url)
+      .withUrl(urlHub)
+      .withAutomaticReconnect([0, 2000, 10000, 30000])   // ← THÊM
       .configureLogging(signalR.LogLevel.Information)
-      .build();
+      .build()
+
+    hubConnection.value.onreconnected(() => { receiverUpdate() })  // ← THÊM
+    hubConnection.value.onclose(() => {startInterval();})
+
     try {
-      await hubConnection.value.start();
-      receiverUpdate();
+      await hubConnection.value.start()
+      receiverUpdate()
     } catch (err) {
       console.error('SignalR Connection failed to start:', err);
       startInterval(); // Khởi động lại kết nối nếu có lỗi
     }
-  hubConnection.value.onclose(() => {
-      startInterval();
-    });
 };
 
 const receiverUpdate= () => {
@@ -166,9 +167,9 @@ const checkFlightsAndDelete = () => {
     if (hubConnection.value) {
       hubConnection.value
         .invoke("DeleteFlightFromClient", nameCounter.value ,location.value) 
-        .then((result) => { // Nhận kết quả từ server
+        .then((result: boolean) => { // Nhận kết quả từ server
           if (result) {
-            //stopCheckingFlights();
+            stopCheckingFlights();
           }
         })
         .catch((err) => {
@@ -207,16 +208,18 @@ const stopCheckingFlights = () => {
 const intervalId = ref<number | null>(null);
 const reconnectHub = async () => {
   try {
-    await hubConnection.value?.start();
-    receiverUpdate();
+    if (hubConnection.value) {
+      try { await hubConnection.value.stop() } catch {}
+    }
+    await connectHub()  // ← rebuild hoàn toàn
     if (intervalId.value !== null) {
-      clearInterval(intervalId.value);
-      intervalId.value = null;
+      clearInterval(intervalId.value)
+      intervalId.value = null
     }
   } catch (err) {
-    console.error("SignalR reconnection failed:", err);
+    console.error('[Checkin] Manual reconnect failed:', err)
   }
-};
+}
 
 const startInterval = () => {
   if (intervalId.value !== null) {
