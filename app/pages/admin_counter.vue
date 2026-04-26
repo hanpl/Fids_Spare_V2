@@ -166,7 +166,7 @@
 import * as signalR from '@microsoft/signalr';
 import { ref, reactive, onMounted, onUnmounted } from 'vue';
 
-const urlHub    = 'https://localhost:7079/dashboardHub';
+const urlHub    = 'https://localhost:7248/dashboardHub';
 const urlApi    = 'https://localhost:7079/api';
 const urlImages = 'http://localhost:5051/api/Images';
 
