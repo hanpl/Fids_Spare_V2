@@ -41,20 +41,20 @@
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ convertToTimeOnly(item.closeTime) }}</td>
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ item.flight }}</td>
                   <td class="checkput" @click.stop="updateMode(item, 'Nomal')">
-                    <i :class="['auto fa-2xl', item.mode !== 'Nomal' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                    <i :class="['auto fa-2x', item.mode !== 'Nomal' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                   <td class="checkput" @click.stop="updateMode(item, 'Eco')">
-                    <i :class="['auto fa-2xl', item.mode !== 'Eco' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                    <i :class="['auto fa-2x', item.mode !== 'Eco' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                   <td class="checkput" @click.stop="updateMode(item, 'Bus')">
-                    <i :class="['auto fa-2xl', item.mode !== 'Bus' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                    <i :class="['auto fa-2x', item.mode !== 'Bus' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ item.status }}</td>
                   <td class="checkput" @click.stop="updateAuto(item)">
-                    <i :class="['auto fas fa-2xl', item.auto !== 'True' ? 'fa-toggle-off' : 'fa-toggle-on']"
+                    <i :class="['auto fas fa-2x', item.auto !== 'True' ? 'fa-toggle-off' : 'fa-toggle-on']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                 </tr>
@@ -76,29 +76,37 @@
               <!-- Nomal -->
               <div class="row">
                 <span class="label">Nomal:</span>
-                <span class="value">{{ responseDataFlight.nomal || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="openImagePicker('nomal')"></i>
+                <span class="value">{{ responseDataFlight.nomal || '—' }}</span>
+                <button class="btn-pick" @click="openImagePicker('nomal')">
+                  <i class="fas fa-images"></i> Chọn
+                </button>
               </div>
 
               <!-- Economy -->
               <div class="row">
                 <span class="label">Economy:</span>
-                <span class="value">{{ responseDataFlight.eco || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="openImagePicker('eco')"></i>
+                <span class="value">{{ responseDataFlight.eco || '—' }}</span>
+                <button class="btn-pick" @click="openImagePicker('eco')">
+                  <i class="fas fa-images"></i> Chọn
+                </button>
               </div>
 
               <!-- Business -->
               <div class="row">
                 <span class="label">Business:</span>
-                <span class="value">{{ responseDataFlight.bus || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="openImagePicker('bus')"></i>
+                <span class="value">{{ responseDataFlight.bus || '—' }}</span>
+                <button class="btn-pick" @click="openImagePicker('bus')">
+                  <i class="fas fa-images"></i> Chọn
+                </button>
               </div>
 
               <!-- Manual -->
               <div class="row">
                 <span class="label">Set Manual:</span>
-                <span class="value">{{ responseDataFlight.manual || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="openImagePicker('manual')"></i>
+                <span class="value">{{ responseDataFlight.manual || '—' }}</span>
+                <button class="btn-pick" @click="openImagePicker('manual')">
+                  <i class="fas fa-images"></i> Chọn
+                </button>
               </div>
             </div>
 
@@ -140,7 +148,7 @@
       <div class="picker-modal">
         <div class="picker-header">
           <span>Select images for <strong>{{ picker.field }}</strong></span>
-          <i class="fas fa-times" style="cursor:pointer" @click="picker.visible = false"></i>
+          <span style="cursor:pointer;font-size:1.4em;line-height:1;font-weight:400" @click="picker.visible = false">×</span>
         </div>
         <div class="picker-grid">
           <div
@@ -165,6 +173,8 @@
 <script setup lang="ts">
 import * as signalR from '@microsoft/signalr';
 import { ref, reactive, onMounted, onUnmounted } from 'vue';
+
+definePageMeta({ layout: 'checkinlayout' });
 
 const urlHub    = 'https://localhost:7248/dashboardHub';
 const urlApi    = 'https://localhost:7079/api';
@@ -518,14 +528,34 @@ tr:nth-child(even) { background-color: #e8ebee; }
 }
 .row:last-child { border-bottom: none; }
 .label { font-weight: bold; color: #333; flex: 1; }
-.value { color: #555; flex: 1; text-align: center; }
-.icon {
-  color: #1e90ff;
-  font-size: 1.2em;
-  cursor: pointer;
-  transition: transform 0.2s, color 0.2s;
+.value {
+  color: #555;
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 110px;
+  font-size: 0.8em;
 }
-.icon:hover { color: #0056b3; transform: scale(1.1); }
+.text-green { color: #28a745 !important; }
+.text-gray  { color: #9e9e9e !important; }
+
+.btn-pick {
+  background: #1e90ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.82em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-pick:hover { background: #0056b3; }
 
 .card-body.pad.table-responsive.poisionfid {
   position: fixed;
