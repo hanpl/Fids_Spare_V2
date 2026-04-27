@@ -10,15 +10,13 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     public: {
-    //apiBase: 'http://172.17.18.12:8901/api',
-    //urlHub: 'http://172.17.18.12:8084/dashboardHub',
-    apiBase: 'https://localhost:7079/api',
-    urlHub: 'https://localhost:7248/dashboardHub',
-  }
+      apiBase: import.meta.env.NUXT_PUBLIC_API_BASE || 'https://localhost:7079/api',
+      urlHub: import.meta.env.NUXT_PUBLIC_URL_HUB || 'https://localhost:7248/dashboardHub'
+    }
   },
   app: {
     head: {
-      title: 'AHT Asset Hub',
+      title: 'AHT Fids Spare',
       meta: [{ name: 'viewport', content: 'width=device-width, initial-scale=1' }]
     }
   }

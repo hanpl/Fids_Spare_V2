@@ -1,11 +1,13 @@
 <template>
     <Gate v-if="gate" />
     <DepCollins v-if="depCollins" />
+    <Checkin v-if="checkin" />
 
 </template>
   <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
   import DepCollins from './Departures_Collins.vue';
+  import Checkin from './checkin.vue';
   import Gate from './gate.vue';
   const gate = ref(false);
   const checkin = ref(false);
