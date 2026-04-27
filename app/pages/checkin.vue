@@ -78,56 +78,6 @@ const changeImage = () => {
 };
 
 
-// ─── Image helpers ────────────────────────────────────────────────────────────
-
-// Parse comma-separated image values (full URL or local filename) into array of resolved srcs
-const parseImgs = (raw: string | null | undefined, folder: string, fallback: string): string[] => {
-  if (!raw || raw === 'null' || raw.trim() === '') return [`/img/${folder}/${fallback}`];
-  return raw.split(',').map(s => {
-    const v = s.trim();
-    return v.startsWith('http') ? v : `/img/${folder}/${v}`;
-  }).filter(Boolean);
-};
-
-// Per-field image arrays and current index for multi-image rotation
-const nomalImgs  = ref<string[]>([]);
-const ecoImgs    = ref<string[]>([]);
-const busImgs    = ref<string[]>([]);
-const manualImgs = ref<string[]>([]);
-
-let imgRotateId: number | null = null;
-let currentMode = '';
-
-const stopImgRotation = () => {
-  if (imgRotateId !== null) { clearInterval(imgRotateId); imgRotateId = null; }
-};
-
-const startImgRotation = (mode: string) => {
-  stopImgRotation();
-  currentMode = mode;
-  let ni = 0, ei = 0, bi = 0, mi = 0;
-  showImghafl.value  = nomalImgs.value[0]  ?? '';
-  showImg.value      = (mode === 'Eco' ? ecoImgs.value : busImgs.value)[0] ?? '';
-  showImgManual.value = manualImgs.value[0] ?? '';
-
-  imgRotateId = window.setInterval(() => {
-    if (nomalImgs.value.length > 1) {
-      ni = (ni + 1) % nomalImgs.value.length;
-      showImghafl.value = nomalImgs.value[ni];
-    }
-    const modeImgs = currentMode === 'Eco' ? ecoImgs.value : busImgs.value;
-    if (modeImgs.length > 1) {
-      if (currentMode === 'Eco') { ei = (ei + 1) % modeImgs.length; }
-      else                       { bi = (bi + 1) % modeImgs.length; }
-      showImg.value = currentMode === 'Eco' ? ecoImgs.value[ei] : busImgs.value[bi];
-    }
-    if (manualImgs.value.length > 1) {
-      mi = (mi + 1) % manualImgs.value.length;
-      showImgManual.value = manualImgs.value[mi];
-    }
-  }, 5000);
-};
-
 // ─── SignalR ──────────────────────────────────────────────────────────────────
 
 const hubConnection = ref<signalR.HubConnection | null>(null);
@@ -168,15 +118,20 @@ const receiverUpdate = () => {
     Nomal.value     = data.mode === "Nomal" && isOnTime.value;
     Model.value     = data.auto !== "False" && now >= timeStart.value;
 
-    const f1080 = `${data.autoImg}_1920x1080.png`;
-    const f480  = `${data.autoImg}_1920x480.png`;
+    const f1080 = `/img/fullscreen/${data.autoImg}_1920x1080.png`;
+    const f480  = `/img/1920x480/${data.autoImg}_1920x480.png`;
 
-    nomalImgs.value  = parseImgs(data.nomal,  '1920x480',  f480);
-    ecoImgs.value    = parseImgs(data.eco,    'fullscreen', f1080);
-    busImgs.value    = parseImgs(data.bus,    'fullscreen', f1080);
-    manualImgs.value = parseImgs(data.manual, 'fullscreen', f1080);
+    // Mỗi mode chỉ chứa 1 URL duy nhất — lấy trực tiếp, fallback nếu rỗng
+    showImghafl.value   = data.nomal  || f480;
+    showImgManual.value = data.manual || f1080;
 
-    startImgRotation(data.mode ?? '');
+    // showImg dùng cho Eco / Bus / Other (tùy mode hiện tại)
+    const mode = data.mode ?? '';
+    if (mode === 'Eco')        showImg.value = data.eco   || f1080;
+    else if (mode === 'Bus')   showImg.value = data.bus   || f1080;
+    else if (mode === 'Other') showImg.value = data.other || f1080;
+    else                       showImg.value = data.eco   || f1080;
+
     startCheckingFlights();
   });
 };
@@ -300,7 +255,6 @@ onMounted(async () => {
 
 onUnmounted(() => {
   stopCheckingFlights();
-  stopImgRotation();
   if (intervalId.value !== null) clearInterval(intervalId.value);
   if (intervalIdaht.value !== null) clearInterval(intervalIdaht.value);
   hubConnection.value?.stop();
