@@ -18,6 +18,7 @@
                   <th class="checkput">Nomal</th>
                   <th class="checkput">Eco</th>
                   <th class="checkput">Bus</th>
+                  <th class="checkput">Other</th>
                   <th>Remark</th>
                   <th class="checkput">Auto</th>
                 </tr>
@@ -52,6 +53,10 @@
                     <i :class="['auto fa-2x', item.mode !== 'Bus' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
+                  <td class="checkput" @click.stop="updateMode(item, 'Other')">
+                    <i :class="['auto fa-2x', item.mode !== 'Other' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                       style="font-size: x-large; color:#0b1c60"></i>
+                  </td>
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ item.status }}</td>
                   <td class="checkput" @click.stop="updateAuto(item)">
                     <i :class="['auto fas fa-2x', item.auto !== 'True' ? 'fa-toggle-off' : 'fa-toggle-on']"
@@ -77,7 +82,10 @@
                   <!-- Nomal -->
                 <div class="row">
                   <span class="label">Nomal:</span>
-                  <span class="value">{{ responseDataFlight.nomal || '—' }}</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.nomal" :src="responseDataFlight.nomal" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
                   <button class="btn-pick" @click="openImagePicker('nomal')">
                     <i class="fas fa-images"></i> Chọn
                   </button>
@@ -86,7 +94,10 @@
                 <!-- Economy -->
                 <div class="row">
                   <span class="label">Economy:</span>
-                  <span class="value">{{ responseDataFlight.eco || '—' }}</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.eco" :src="responseDataFlight.eco" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
                   <button class="btn-pick" @click="openImagePicker('eco')">
                     <i class="fas fa-images"></i> Chọn
                   </button>
@@ -95,7 +106,10 @@
                 <!-- Business -->
                 <div class="row">
                   <span class="label">Business:</span>
-                  <span class="value">{{ responseDataFlight.bus || '—' }}</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.bus" :src="responseDataFlight.bus" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
                   <button class="btn-pick" @click="openImagePicker('bus')">
                     <i class="fas fa-images"></i> Chọn
                   </button>
@@ -104,8 +118,23 @@
                 <!-- Manual -->
                 <div class="row">
                   <span class="label">Set Manual:</span>
-                  <span class="value">{{ responseDataFlight.manual || '—' }}</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.manual" :src="responseDataFlight.manual" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
                   <button class="btn-pick" @click="openImagePicker('manual')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
+                </div>
+
+                <!-- # -->
+                <div class="row">
+                  <span class="label">Set #Other:</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.other" :src="responseDataFlight.other" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
+                  <button class="btn-pick" @click="openImagePicker('other')">
                     <i class="fas fa-images"></i> Chọn
                   </button>
                 </div>
@@ -201,6 +230,7 @@ interface CounterItem {
   eco: string;
   bus: string;
   manual: string;
+  other: string;
 }
 
 interface FlightImage {
@@ -209,6 +239,7 @@ interface FlightImage {
   eco: string;
   bus: string;
   manual: string;
+  other: string;
 }
 
 interface LineCode {
@@ -225,7 +256,7 @@ interface ImageItem {
 
 const responseData       = ref<CounterItem[]>([]);
 const responseLineCode   = ref<LineCode[]>([]);
-const responseDataFlight = ref<FlightImage>({ name: '', nomal: '', eco: '', bus: '', manual: '' });
+const responseDataFlight = ref<FlightImage>({ name: '', nomal: '', eco: '', bus: '', manual: '', other: '' });
 const imageLibrary       = ref<ImageItem[]>([]);
 
 const inputValueLineCode = ref('');
@@ -250,13 +281,6 @@ const fetchImageLibrary = async () => {
   }
 };
 
-// const openImagePicker = async (field: string) => {
-//   await fetchImageLibrary();
-//   picker.field = field;
-//   const current = responseDataFlight.value[field as keyof FlightImage] ?? '';
-//   picker.selected = current ? current.split(',').map(s => s.trim()).filter(Boolean) : [];
-//   picker.visible = true;
-// };
 
 
 const openImagePicker = async (field: string) => {
@@ -268,9 +292,11 @@ const openImagePicker = async (field: string) => {
 };
 
 const toggleImage = (url: string) => {
-  const idx = picker.selected.indexOf(url);
-  if (idx === -1) picker.selected.push(url);
-  else picker.selected.splice(idx, 1);
+  if (picker.selected.includes(url)) {
+    picker.selected = [];
+  } else {
+    picker.selected = [url];
+  }
 };
 
 const confirmPicker = async () => {
@@ -280,6 +306,7 @@ const confirmPicker = async () => {
   else if (field === 'eco')    await SelectEco(value);
   else if (field === 'bus')    await SelectBus(value);
   else if (field === 'manual') await SelectManual(value);
+  else if (field === 'other') await SelectOther(value);
   picker.visible = false;
 };
 
@@ -337,7 +364,7 @@ const SelectNomal = async (name: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateNomal`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: name, eco: '', bus: '', manual: '' }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: name, eco: '', bus: '', manual: '', other:'' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.nomal = name;
@@ -350,7 +377,7 @@ const SelectEco = async (eco: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateEco`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco, bus: '', manual: '' }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco, bus: '', manual: '', other: '' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.eco = eco;
@@ -363,7 +390,7 @@ const SelectBus = async (bus: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateBus`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus, manual: '' }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus, manual: '', other: '' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.bus = bus;
@@ -376,11 +403,24 @@ const SelectManual = async (manual: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateManual`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus: '', manual }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus: '', manual, other: '' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.manual = manual;
   } catch (err) { console.error('[SelectManual]', err); }
+};
+
+const SelectOther = async (other: string) => {
+  if (!other || other === responseDataFlight.value.other) return;
+  try {
+    const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateOther`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus: '', manual:'', other }),
+    });
+    if (!res.ok) throw new Error('Update failed');
+    responseDataFlight.value.other = other;
+  } catch (err) { console.error('[SelectOther]', err); }
 };
 
 // ─── Counter Row Actions ──────────────────────────────────────────────────────
@@ -392,6 +432,7 @@ const handleSetupClick = (item: CounterItem) => {
     eco:    item.eco,
     bus:    item.bus,
     manual: item.manual,
+    other:  item.other,
   };
 };
 
@@ -544,11 +585,21 @@ tr:nth-child(even) { background-color: #e8ebee; }
   color: #555;
   flex: 1;
   text-align: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-  font-size: 0.8em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.thumb-preview {
+  width: 120px;
+  height: 80px;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #e9e4e4;;
+}
+.thumb-empty {
+  font-size: 1.2em;
+  color: #bbb;
 }
 .text-green { color: #28a745 !important; }
 .text-gray  { color: #9e9e9e !important; }
