@@ -1,7 +1,7 @@
 <template>
     <div class="header">
         <div class="logo">
-           <a href="/"><img class="logoaht" src="/img/logo/AHT.png" alt="" title=""></a>
+           <a href="/"><img class="logoaht" src="/logos/AHT.png" alt="" title=""></a>
         </div>
         <div class="text">
             <a href="/">CHECK-IN</a>

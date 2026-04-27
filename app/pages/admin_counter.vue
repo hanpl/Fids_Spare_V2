@@ -72,49 +72,51 @@
               </thead>
             </table>
 
-            <div class="container">
-              <!-- Nomal -->
-              <div class="row">
-                <span class="label">Nomal:</span>
-                <span class="value">{{ responseDataFlight.nomal || '—' }}</span>
-                <button class="btn-pick" @click="openImagePicker('nomal')">
-                  <i class="fas fa-images"></i> Chọn
-                </button>
-              </div>
+            <div class="row" style="margin: 10px;">
+              <div class="col-12">
+                  <!-- Nomal -->
+                <div class="row">
+                  <span class="label">Nomal:</span>
+                  <span class="value">{{ responseDataFlight.nomal || '—' }}</span>
+                  <button class="btn-pick" @click="openImagePicker('nomal')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
+                </div>
 
-              <!-- Economy -->
-              <div class="row">
-                <span class="label">Economy:</span>
-                <span class="value">{{ responseDataFlight.eco || '—' }}</span>
-                <button class="btn-pick" @click="openImagePicker('eco')">
-                  <i class="fas fa-images"></i> Chọn
-                </button>
-              </div>
+                <!-- Economy -->
+                <div class="row">
+                  <span class="label">Economy:</span>
+                  <span class="value">{{ responseDataFlight.eco || '—' }}</span>
+                  <button class="btn-pick" @click="openImagePicker('eco')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
+                </div>
 
-              <!-- Business -->
-              <div class="row">
-                <span class="label">Business:</span>
-                <span class="value">{{ responseDataFlight.bus || '—' }}</span>
-                <button class="btn-pick" @click="openImagePicker('bus')">
-                  <i class="fas fa-images"></i> Chọn
-                </button>
-              </div>
+                <!-- Business -->
+                <div class="row">
+                  <span class="label">Business:</span>
+                  <span class="value">{{ responseDataFlight.bus || '—' }}</span>
+                  <button class="btn-pick" @click="openImagePicker('bus')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
+                </div>
 
-              <!-- Manual -->
-              <div class="row">
-                <span class="label">Set Manual:</span>
-                <span class="value">{{ responseDataFlight.manual || '—' }}</span>
-                <button class="btn-pick" @click="openImagePicker('manual')">
-                  <i class="fas fa-images"></i> Chọn
-                </button>
+                <!-- Manual -->
+                <div class="row">
+                  <span class="label">Set Manual:</span>
+                  <span class="value">{{ responseDataFlight.manual || '—' }}</span>
+                  <button class="btn-pick" @click="openImagePicker('manual')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
+                </div>
               </div>
             </div>
 
             <div class="row">
               <div class="col-12" style="margin-top: 10px;">
                 <div class="card">
-                  <div class="card-header" style="height: 42px; margin-top: -4px; background-color: #31d2f2;">
-                    <h3 class="card-title" style="font-weight: bold;">Airline Code</h3>
+                  <div class="card-header" style="height: 42px; margin-top: -4px; background-color: #31d2f2; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="" style="font-weight: bold;">Airline Code</h3>
                     <div class="card-tools">
                       <div class="input-group input-group-sm" style="width: 150px;">
                         <input type="text" v-model="inputValueLineCode"
@@ -173,6 +175,7 @@
 <script setup lang="ts">
 import * as signalR from '@microsoft/signalr';
 import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import '~/assets/css/fontawesome/all.min.css';
 
 definePageMeta({ layout: 'checkinlayout' });
 
@@ -247,11 +250,20 @@ const fetchImageLibrary = async () => {
   }
 };
 
+// const openImagePicker = async (field: string) => {
+//   await fetchImageLibrary();
+//   picker.field = field;
+//   const current = responseDataFlight.value[field as keyof FlightImage] ?? '';
+//   picker.selected = current ? current.split(',').map(s => s.trim()).filter(Boolean) : [];
+//   picker.visible = true;
+// };
+
+
 const openImagePicker = async (field: string) => {
   await fetchImageLibrary();
   picker.field = field;
   const current = responseDataFlight.value[field as keyof FlightImage] ?? '';
-  picker.selected = current ? current.split(',').map(s => s.trim()).filter(Boolean) : [];
+  picker.selected = current ? [current.trim()] : [];
   picker.visible = true;
 };
 
@@ -512,10 +524,10 @@ tr:nth-child(even) { background-color: #e8ebee; }
 
 .container {
   background-color: #f9f9f9;
-  padding: 20px;
+  padding: 1px;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  max-width: 400px;
+  box-shadow: 0 0px 5px rgba(0,0,0,0.1);
+  max-width: 23vw;
   margin: 0 auto;
   font-family: Arial, sans-serif;
 }
@@ -535,7 +547,7 @@ tr:nth-child(even) { background-color: #e8ebee; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 110px;
+  max-width: 100%;
   font-size: 0.8em;
 }
 .text-green { color: #28a745 !important; }
