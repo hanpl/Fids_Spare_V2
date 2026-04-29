@@ -10,7 +10,7 @@
                             <th style="width: 22%;">AIRLINE</th>
                             <th style="width: 12%;">FLIGHT</th>
                             <th style="width: 25%; "><spam style="float: left; padding-left: 2.4%;">DESTINATION</spam></th>
-                            <th style="width: 6%;">GATE</th>
+                            <th style="width: 6%;">COUNTERS</th>
                             <th style="width: 10%;">ETD</th>
                             <th style="width: 15%;">REMARK</th>
                         </tr>
@@ -37,11 +37,11 @@
                         <tr v-else-if="flight.flight" class="sizerowcl">
                           <td class="midal">{{ formatTime(flight.schedule) }}</td>
                           <td class="midallogo">
-                            <AirlineLogo :line-code="flight.lineCode" />
+                            <AirlineLogo :line-code="flight.lineCode" location="FIDs" />
                           </td>
                           <td class="midal">{{ flight.flight }}</td>
                           <td class="midalcl">{{ getFullCityName(flight.city) }}</td>
-                          <td class="midal">{{ flight.gate }}</td>
+                          <td class="midal">{{ flight.checkInCounters }}</td>
                           <td class="midal">{{ formatTime(flight.actual || flight.estimated) }}</td>
                           <td class="midal" :class="flight.remark == 'Boarding' ? 'green' : flight.remark == 'Cancelled' ? 'red' : flight.remark == 'Delayed' ? 'yellow' : ''">
                             {{ flight.remark }}
@@ -79,7 +79,7 @@
                             <th style="width: 22%;">AIRLINE</th>
                             <th style="width: 12%;">FLIGHT</th>
                             <th style="width: 25%; "><spam style="float: left; padding-left: 2.4%;">DESTINATION</spam></th>
-                            <th style="width: 6%;">GATE</th>
+                            <th style="width: 6%;">COUNTERS</th>
                             <th style="width: 10%;">ETD</th>
                             <th style="width: 15%;">REMARK</th>
                         </tr>
@@ -102,11 +102,11 @@
                         <tr v-else-if="flight.flight" class="sizerowcl" :class="`row-${index}`">
                           <td class="midal">{{ formatTime(flight.schedule) }}</td>
                           <td class="midallogo">
-                            <AirlineLogo :line-code="flight.lineCode" />
+                            <AirlineLogo :line-code="flight.lineCode" location="FIDs" />
                           </td>
                           <td class="midal">{{ flight.flight }}</td>
                           <td class="midalcl">{{ getFullCityName(flight.city) }}</td>
-                          <td class="midal">{{ flight.gate }}</td>
+                          <td class="midal">{{ flight.checkInCounters }}</td>
                           <td class="midal">{{ formatTime(flight.actual || flight.estimated) }}</td>
                           <td class="midal" :class="flight.remark == 'Boarding' ? 'green' : flight.remark == 'Cancelled' ? 'red' : flight.remark == 'Delayed' ? 'yellow' : ''">
                             {{ flight.remark }}
@@ -144,10 +144,30 @@
   import { parse, format } from 'date-fns'
   import { watch, reactive, toRefs } from 'vue';
   const currentIndex = ref(0);
-
   const config = useRuntimeConfig()
+  const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
 
-  const intervalId = ref<ReturnType<typeof setInterval> | null>(null)
+
+const displayedRowCount = computed(() => {
+    if (!pagedGroups.value) return 0
+    return pagedGroups.value.reduce((count, flight, index) => {
+      if (flight.isDaybreak && index < pageSize-1) return count + 2
+      return count + 1
+    }, 0)
+  })
+
+  const displayedRowCount1 = computed(() => {
+    if (!pagedGroups1.value) return 0
+    return pagedGroups1.value.reduce((count, flight, index) => {
+      // nếu là dòng daybreak và index < 11 → chiếm 2 hàng (ngày + dữ liệu)
+      if (flight.isDaybreak && index < pageSize-1) return count + 2
+      // còn lại chỉ 1 hàng
+      return count + 1
+    }, 0)
+  })
+  
+
+  const intervalId = ref<ReturnType<typeof setInterval> | null>(null);
   const countries = reactive({
     cityMap: [
         {codeAirport: "BHY",nameAirport: "Beihai",countries: "Trung Quốc"},
@@ -172,26 +192,11 @@ async function loadFlights(rollOn: number, rollOff: number) {
   flights.value = await refetchDataArr(rollOn, rollOff);
   const allFlights = groupFlightsByDayWithBreak(flights.value)
   pagedGroupsData.value = paginateFlights(allFlights)
+  //console.log(pagedGroupsData.value);
   if (currentPage.value >= pagedGroupsData.value.length) {
     currentPage.value = 0;
   }
 }
-
-const displayedRowCount = computed(() => {
-  if (!pagedGroups.value) return 0
-  return pagedGroups.value.reduce((count, flight, index) => {
-    if (flight.isDaybreak && index < pageSize-1) return count + 2
-    return count + 1
-  }, 0)
-})
-
-const displayedRowCount1 = computed(() => {
-  if (!pagedGroups1.value) return 0
-  return pagedGroups1.value.reduce((count, flight, index) => {
-    if (flight.isDaybreak && index < pageSize-1) return count + 2
-    return count + 1
-  }, 0)
-})
   
 const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[]> =>
   {
@@ -200,6 +205,7 @@ const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[
     method: 'GET',
     query: { rollOn, rollOff}
   });
+   //flights.value = data.value ?? [];
   if (error.value) {
     console.error('❌ API Error:', error.value)
     return []
@@ -208,8 +214,9 @@ const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[
 }
 
 function groupFlightsByDayWithBreak(flights: Flight[]) {
+  //console.log(flights[0].scheduledDate);
   const result: any[] = []
-  let currentDay = flights[0]?.scheduledDate ?? ''
+  let currentDay = flights.length > 0 ? flights[0]?.scheduledDate ?? '' : ''
   flights.forEach((flight) => {
     const dateKey = flight.scheduledDate;
     if (dateKey !== currentDay) {
@@ -218,8 +225,76 @@ function groupFlightsByDayWithBreak(flights: Flight[]) {
     }
     result.push({ ...flight, isDaybreak: false, date: dateKey })
   })
+  //console.log(result);
   return result
 };
+
+// function paginateFlights(flightList: any[]) {
+//   const pages: any[][] = []
+//   let currentPage: any[] = []
+//   let rowCount = 0
+
+//   for (const item of flightList) {
+//     const linesNeeded = item.isDaybreak ? 2 : 1
+
+//     if (rowCount + linesNeeded > pageSize) {
+//       pages.push(currentPage)
+//       if (pages.length >= maxPages) break
+//       currentPage = []
+//       rowCount = 0
+//     }
+
+//     currentPage.push(item)
+//     rowCount += linesNeeded
+//   }
+
+//   if (currentPage.length > 0) {
+//     pages.push(currentPage)
+//   }
+
+//   return pages
+// };
+
+// function paginateFlights(flightList: any[]) {
+//   const pages: any[][] = []
+//   let currentPage: any[] = []
+//   let rowCount = 0
+
+//   for (const item of flightList) {
+//     const linesNeeded = item.isDaybreak ? 2 : 1
+
+//     if ((rowCount + linesNeeded == pageSize+1)&& linesNeeded ==2) {
+//       currentPage.push(item)
+//     }
+//     if (rowCount + linesNeeded > pageSize) {
+//       pages.push(currentPage)
+//       if (pages.length === maxPages - 1) {
+//         const remaining = flightList.slice(flightList.indexOf(item))
+//         currentPage = []
+//         rowCount = 0
+
+//         for (const restItem of remaining) {
+//           const restLines = restItem.isDaybreak ? 2 : 1
+//           if (rowCount + restLines > pageSize) break
+
+//           currentPage.push(restItem)
+//           rowCount += restLines
+//         }
+
+//         if (currentPage.length > 0) {
+//           pages.push(currentPage)
+//         }
+//         break
+//       }
+
+//       currentPage = []
+//       rowCount = 0
+//     }
+
+
+//     currentPage.push(item)
+//     rowCount += linesNeeded
+//   }
 
 function paginateFlights(flightList: any[]) {
   const pages: any[][] = []
@@ -316,8 +391,8 @@ const formatDateToFlightMessage = (dateString: string): string => {
     if (isNaN(date.getTime())) {
         throw new Error('Invalid date format');
     }
-    const dayOfWeek = daysOfWeek[date.getDay()] ?? ''
-    const month     = months[date.getMonth()] ?? ''
+    const dayOfWeek = daysOfWeek[date.getDay()] ?? '';
+    const month = months[date.getMonth()] ?? '';
     const day = date.getDate();
     const year = date.getFullYear();
     return `FLIGHTS FOR ${dayOfWeek.toUpperCase()} ${month.toUpperCase()} ${day}, ${year}`;
@@ -351,9 +426,8 @@ const loadconfig = async () => {
   }
 };
 
-const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null)
-const intervalLoadConfig  = ref<ReturnType<typeof setInterval> | null>(null)
-const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
+const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null);
+const intervalLoadConfig = ref<ReturnType<typeof setInterval> | null>(null);
 onMounted(async () => {
   await loadAll()
   startPolling()
@@ -383,8 +457,10 @@ function autoRotatePages() {
 const pagedGroups1 = computed(() => {
   const pageCount = pagedGroupsData.value.length;
   if (currentPage.value >= pageCount) {
-    currentPage.value = 0;
+    currentPage.value = 0; // Reset về trang đầu nếu vượt quá
   }
+  //console.log(pagedGroupsData.value)
+  //console.log(currentPage.value, pagedGroupsData.value[currentPage.value]);
   return pagedGroupsData.value[0]
 });
 
@@ -393,11 +469,13 @@ const pagedGroups = computed(() => {
   if (currentPage.value >= pageCount) {
     currentPage.value = 0; // Reset về trang đầu nếu vượt quá
   }
+  //console.log(pagedGroupsData.value)
+  //console.log(currentPage.value, pagedGroupsData.value[currentPage.value]);
   return pagedGroupsData.value[1]
 });
 
 
-onUnmounted( () => {
+onUnmounted(() => {
   stopPolling()
   if (intervalId.value) {
       clearInterval(intervalId.value);

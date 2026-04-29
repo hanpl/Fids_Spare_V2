@@ -29,12 +29,12 @@
                             
                           </td>
                         </tr>
-                        <tr v-if="flight.isDaybreak" class="sizerow notice-row" style="height: 0vh;">
+                        <tr v-if="flight.isDaybreak" class="sizerow notice-row" :class="`row-${index}`" style="height: 0vh;">
 
                         </tr>
 
                         <!-- Nếu là chuyến bay -->
-                        <tr v-else-if="flight.flight" class="sizerowcl">
+                        <tr v-else-if="flight.flight" class="sizerowcl" :class="`row-${index}`">
                           <td class="midal">{{ formatTime(flight.schedule) }}</td>
                           <td class="midallogo">
                             <AirlineLogo :line-code="flight.lineCode" />
@@ -142,12 +142,30 @@
   <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
   import { parse, format } from 'date-fns'
-  import { watch, reactive, toRefs } from 'vue';
-  const currentIndex = ref(0);
+  import { reactive } from 'vue';
 
   const config = useRuntimeConfig()
+  const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
 
-  const intervalId = ref<ReturnType<typeof setInterval> | null>(null)
+  const displayedRowCount = computed(() => {
+    if (!pagedGroups.value) return 0
+    return pagedGroups.value.reduce((count, flight, index) => {
+      if (flight.isDaybreak && index < pageSize-1) return count + 2
+      return count + 1
+    }, 0)
+  })
+
+  const displayedRowCount1 = computed(() => {
+    if (!pagedGroups1.value) return 0
+    return pagedGroups1.value.reduce((count, flight, index) => {
+      // nếu là dòng daybreak và index < 11 → chiếm 2 hàng (ngày + dữ liệu)
+      if (flight.isDaybreak && index < pageSize-1) return count + 2
+      // còn lại chỉ 1 hàng
+      return count + 1
+    }, 0)
+  })
+
+  const intervalId = ref<ReturnType<typeof setInterval> | null>(null);
   const countries = reactive({
     cityMap: [
         {codeAirport: "BHY",nameAirport: "Beihai",countries: "Trung Quốc"},
@@ -168,7 +186,6 @@ let pageInterval = 3000
 let reloadInterval = 180000 // 3 phút
 
 async function loadFlights(rollOn: number, rollOff: number) {
-
   flights.value = await refetchDataArr(rollOn, rollOff);
   const allFlights = groupFlightsByDayWithBreak(flights.value)
   pagedGroupsData.value = paginateFlights(allFlights)
@@ -176,29 +193,12 @@ async function loadFlights(rollOn: number, rollOff: number) {
     currentPage.value = 0;
   }
 }
-
-const displayedRowCount = computed(() => {
-  if (!pagedGroups.value) return 0
-  return pagedGroups.value.reduce((count, flight, index) => {
-    if (flight.isDaybreak && index < pageSize-1) return count + 2
-    return count + 1
-  }, 0)
-})
-
-const displayedRowCount1 = computed(() => {
-  if (!pagedGroups1.value) return 0
-  return pagedGroups1.value.reduce((count, flight, index) => {
-    if (flight.isDaybreak && index < pageSize-1) return count + 2
-    return count + 1
-  }, 0)
-})
   
-const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[]> =>
-  {
+const refetchDataArr = async (rollOn: number, rollOff: number): Promise<Flight[]> => {
   const { data, error } = await useFetch<Flight[]>('/FidsDepartures', {
     baseURL: `${config.public.apiBase}`,
     method: 'GET',
-    query: { rollOn, rollOff}
+    query: { rollOn, rollOff }
   });
   if (error.value) {
     console.error('❌ API Error:', error.value)
@@ -207,19 +207,27 @@ const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[
   return data.value ?? []
 }
 
+
 function groupFlightsByDayWithBreak(flights: Flight[]) {
   const result: any[] = []
-  let currentDay = flights[0]?.scheduledDate ?? ''
-  flights.forEach((flight) => {
-    const dateKey = flight.scheduledDate;
+  const filtered = flights.filter(f => Number(f.gate) < 6) 
+
+  let currentDay = filtered.length > 0 ? filtered[0]?.scheduledDate ?? '' : ''
+
+  filtered.forEach((flight) => {
+    const dateKey = flight.scheduledDate
     if (dateKey !== currentDay) {
       result.push({ isDaybreak: true, date: dateKey })
       currentDay = dateKey
     }
     result.push({ ...flight, isDaybreak: false, date: dateKey })
   })
+
   return result
-};
+}
+
+
+
 
 function paginateFlights(flightList: any[]) {
   const pages: any[][] = []
@@ -262,8 +270,6 @@ function paginateFlights(flightList: any[]) {
     currentPage.push(item)
     rowCount += linesNeeded
   }
-
-  // Nếu chưa đủ 2 trang thì thêm phần còn lại
   if (currentPage.length > 0 && pages.length < maxPages) {
     pages.push(currentPage)
   }
@@ -289,20 +295,16 @@ const getFullCityName = (shortCode: string): string => {
       return  airport ? airport.nameAirport : 'Not Found'
 };
 
-const formatTime = (datetime:string) :string => {
-    if(datetime != "")
-    {
-        const date = parse(datetime, 'dd/MM/yyyy h:mm:ss a', new Date());
-        if (isNaN(date.getTime())) {
-            throw new Error('Invalid datetime format'+ datetime);
-        }
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${hours}:${minutes}`;
-    }
-    else
-    {
-        return "";
+const formatTime = (datetime: string): string => {
+    if (!datetime || datetime === '') return ''
+    try {
+      const date = parse(datetime, 'dd/MM/yyyy h:mm:ss a', new Date());
+      if (isNaN(date.getTime())) return ''
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${hours}:${minutes}`;
+    } catch {
+      return ''
     }
 };
   
@@ -323,12 +325,6 @@ const formatDateToFlightMessage = (dateString: string): string => {
     return `FLIGHTS FOR ${dayOfWeek.toUpperCase()} ${month.toUpperCase()} ${day}, ${year}`;
 };
 
-
-const handleImageError = (item: Flight) => {
-        console.log(item.lineCode);
-        item.lineCode = 'trans'; // Thay đổi tên hình thay thế tại đây
-        //console.log(item.lineCode);
-      };
 
 interface ConfigDevice 
 { id: number; name: string; location: string; description: string; ip: string;  rollOn: number;  
@@ -351,9 +347,10 @@ const loadconfig = async () => {
   }
 };
 
-const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null)
-const intervalLoadConfig  = ref<ReturnType<typeof setInterval> | null>(null)
-const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
+const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null);
+const intervalLoadConfig = ref<ReturnType<typeof setInterval> | null>(null);
+const intervalRotate = ref<ReturnType<typeof setInterval> | null>(null);
+
 onMounted(async () => {
   await loadAll()
   startPolling()
@@ -375,7 +372,7 @@ onMounted(async () => {
 })
 
 function autoRotatePages() {
-  setInterval(() => {
+  intervalRotate.value = setInterval(() => {
     currentPage.value = (currentPage.value + 1) % pagedGroupsData.value.length
   }, pageInterval)
 }
@@ -383,7 +380,7 @@ function autoRotatePages() {
 const pagedGroups1 = computed(() => {
   const pageCount = pagedGroupsData.value.length;
   if (currentPage.value >= pageCount) {
-    currentPage.value = 0;
+    currentPage.value = 0; 
   }
   return pagedGroupsData.value[0]
 });
@@ -391,13 +388,13 @@ const pagedGroups1 = computed(() => {
 const pagedGroups = computed(() => {
   const pageCount = pagedGroupsData.value.length;
   if (currentPage.value >= pageCount) {
-    currentPage.value = 0; // Reset về trang đầu nếu vượt quá
+    currentPage.value = 0; 
   }
   return pagedGroupsData.value[1]
 });
 
 
-onUnmounted( () => {
+onUnmounted(() => {
   stopPolling()
   if (intervalId.value) {
       clearInterval(intervalId.value);
@@ -410,6 +407,10 @@ onUnmounted( () => {
   if (intervalLoadConfig.value) {
     clearInterval(intervalLoadConfig.value);
     intervalLoadConfig.value = null;
+  }
+  if (intervalRotate.value) {
+    clearInterval(intervalRotate.value);
+    intervalRotate.value = null;
   }
   });
   
@@ -469,7 +470,6 @@ onBeforeMount(() => {
 
   
 
-
   
   /* .sizerowcl:nth-child(odd) {
       background-color: #283b92;
@@ -501,17 +501,29 @@ onBeforeMount(() => {
     text-align: center !important;
     margin: 0vh;
     width: 85%;
-    display: flex;
+    display: block;
   }
 
-  td.midallogo
- {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    /* flex-wrap: wrap; */
-    height: 6.6vh;
- }
+td.midallogo {
+  text-align: center;
+  vertical-align: middle;
+}
+
+img.Vuelogocl {
+  display: inline-block;
+
+  height: auto;
+  object-fit: contain;
+}
+
+/* th:nth-child(2),
+td:nth-child(2) {
+  width: 90%;
+  min-width: 90%;
+  max-width: 90%;
+} */
+
+
   
 .notice-content {
   font-weight: bold;
@@ -535,20 +547,18 @@ td.yellow {
   width: 100vw;
 }
 
+
 .conten {
-    width: 50vw;
+  width: 50vw;
+
 }
 
 
-.sizerowcl {
-  width: 10px;              /* hoặc bất kỳ giá trị cố định nào */
-  overflow: hidden;
-  white-space: nowrap;
-}
 
-img.Vuelogocl {
-    width: 75%;
-}
 
+.empty-row td {
+  background: transparent;
+  border: none;
+}
 
   </style>

@@ -1,17 +1,17 @@
 <template>
-    <HomeAppHeaderDepCollins />
+    <HomeAppHeaderArrCollins />
     <section class="content">
           <div class="conten" style="padding-right: 1.5px;">
             <div class="card-body pad table-responsive" style="width: 100%">
                 <table class="table table-hover" id="tblWorkOrderDone">
                     <thead class="classtheadheadercl" style="background-color: #36c0c7;height: 6vh;">
                         <tr>
-                            <th style="width: 10%;">STD</th>
+                            <th style="width: 10%;">STA</th>
                             <th style="width: 22%;">AIRLINE</th>
                             <th style="width: 12%;">FLIGHT</th>
-                            <th style="width: 25%; "><spam style="float: left; padding-left: 2.4%;">DESTINATION</spam></th>
-                            <th style="width: 6%;">GATE</th>
-                            <th style="width: 10%;">ETD</th>
+                            <th style="width: 25%; "><spam style="float: left; padding-left: 2.4%;">FROM</spam></th>
+                            <th style="width: 6%;">BELT</th>
+                            <th style="width: 10%;">ETA</th>
                             <th style="width: 15%;">REMARK</th>
                         </tr>
                     </thead>
@@ -37,11 +37,11 @@
                         <tr v-else-if="flight.flight" class="sizerowcl">
                           <td class="midal">{{ formatTime(flight.schedule) }}</td>
                           <td class="midallogo">
-                            <AirlineLogo :line-code="flight.lineCode" />
+                            <AirlineLogo :line-code="flight.lineCode" location="FIDs" />
                           </td>
                           <td class="midal">{{ flight.flight }}</td>
                           <td class="midalcl">{{ getFullCityName(flight.city) }}</td>
-                          <td class="midal">{{ flight.gate }}</td>
+                          <td class="midal">{{ flight.belt }}</td>
                           <td class="midal">{{ formatTime(flight.actual || flight.estimated) }}</td>
                           <td class="midal" :class="flight.remark == 'Boarding' ? 'green' : flight.remark == 'Cancelled' ? 'red' : flight.remark == 'Delayed' ? 'yellow' : ''">
                             {{ flight.remark }}
@@ -75,12 +75,12 @@
                 <table class="table table-hover" id="tblWorkOrderDone">
                     <thead class="classtheadheadercl" style="background-color: #36c0c7;height: 6vh;">
                         <tr>
-                            <th style="width: 10%;">STD</th>
+                            <th style="width: 10%;">STA</th>
                             <th style="width: 22%;">AIRLINE</th>
                             <th style="width: 12%;">FLIGHT</th>
-                            <th style="width: 25%; "><spam style="float: left; padding-left: 2.4%;">DESTINATION</spam></th>
-                            <th style="width: 6%;">GATE</th>
-                            <th style="width: 10%;">ETD</th>
+                            <th style="width: 25%; "><spam style="float: left; padding-left: 2.4%;">FROM</spam></th>
+                            <th style="width: 6%;">BELT</th>
+                            <th style="width: 10%;">ETA</th>
                             <th style="width: 15%;">REMARK</th>
                         </tr>
                     </thead>
@@ -99,14 +99,14 @@
                           </td>
                         </tr>
                         <tr v-if="flight.isDaybreak" class="sizerow notice-row" style="height: 0vh;"></tr>
-                        <tr v-else-if="flight.flight" class="sizerowcl" :class="`row-${index}`">
+                        <tr v-else-if="flight.flight" class="sizerowcl">
                           <td class="midal">{{ formatTime(flight.schedule) }}</td>
                           <td class="midallogo">
-                            <AirlineLogo :line-code="flight.lineCode" />
+                            <AirlineLogo :line-code="flight.lineCode" location="FIDs" />
                           </td>
                           <td class="midal">{{ flight.flight }}</td>
                           <td class="midalcl">{{ getFullCityName(flight.city) }}</td>
-                          <td class="midal">{{ flight.gate }}</td>
+                          <td class="midal">{{ flight.belt }}</td>
                           <td class="midal">{{ formatTime(flight.actual || flight.estimated) }}</td>
                           <td class="midal" :class="flight.remark == 'Boarding' ? 'green' : flight.remark == 'Cancelled' ? 'red' : flight.remark == 'Delayed' ? 'yellow' : ''">
                             {{ flight.remark }}
@@ -144,10 +144,14 @@
   import { parse, format } from 'date-fns'
   import { watch, reactive, toRefs } from 'vue';
   const currentIndex = ref(0);
-
   const config = useRuntimeConfig()
+  const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
 
-  const intervalId = ref<ReturnType<typeof setInterval> | null>(null)
+
+
+
+
+  const intervalId = ref<ReturnType<typeof setInterval> | null>(null);
   const countries = reactive({
     cityMap: [
         {codeAirport: "BHY",nameAirport: "Beihai",countries: "Trung Quốc"},
@@ -156,19 +160,34 @@
 
   interface Flight {
     id: string;scheduledDate: string;schedule: string;estimated: string; actual: string; counterStart: string; counterEnd: string;
-    lineCode: string;flight: string;city: string; gate: string;remark: string; checkInCounters: string; codeShare: string
+    lineCode: string;flight: string;city: string; gate: string; belt: string;remark: string; checkInCounters: string; codeShare: string
   };
 const flights = ref<Flight[]>([]);
 
 const pagedGroupsData = ref<any[][]>([])
 const currentPage = ref(0)
-let pageSize = 10
+let pageSize = 12
 let maxPages = 2
 let pageInterval = 3000
 let reloadInterval = 180000 // 3 phút
 
-async function loadFlights(rollOn: number, rollOff: number) {
+  const displayedRowCount = computed(() => {
+    if (!pagedGroups.value) return 0
+    return pagedGroups.value.reduce((count, flight, index) => {
+      if (flight.isDaybreak && index < pageSize-1) return count + 2
+      return count + 1
+    }, 0)
+  })
 
+  const displayedRowCount1 = computed(() => {
+    if (!pagedGroups1.value) return 0
+    return pagedGroups1.value.reduce((count, flight, index) => {
+      if (flight.isDaybreak && index < pageSize-1) return count + 2
+      return count + 1
+    }, 0)
+  })
+
+async function loadFlights(rollOn: number, rollOff: number) {
   flights.value = await refetchDataArr(rollOn, rollOff);
   const allFlights = groupFlightsByDayWithBreak(flights.value)
   pagedGroupsData.value = paginateFlights(allFlights)
@@ -176,26 +195,9 @@ async function loadFlights(rollOn: number, rollOff: number) {
     currentPage.value = 0;
   }
 }
-
-const displayedRowCount = computed(() => {
-  if (!pagedGroups.value) return 0
-  return pagedGroups.value.reduce((count, flight, index) => {
-    if (flight.isDaybreak && index < pageSize-1) return count + 2
-    return count + 1
-  }, 0)
-})
-
-const displayedRowCount1 = computed(() => {
-  if (!pagedGroups1.value) return 0
-  return pagedGroups1.value.reduce((count, flight, index) => {
-    if (flight.isDaybreak && index < pageSize-1) return count + 2
-    return count + 1
-  }, 0)
-})
   
-const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[]> =>
-  {
-  const { data, error } = await useFetch<Flight[]>('/FidsDepartures', {
+const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[]> =>{
+  const { data, error } = await useFetch<Flight[]>('/FidsArrivals', {
     baseURL: `${config.public.apiBase}`,
     method: 'GET',
     query: { rollOn, rollOff}
@@ -205,11 +207,12 @@ const refetchDataArr = async (rollOn: number,  rollOff: number): Promise<Flight[
     return []
   }
   return data.value ?? []
-}
+};
 
 function groupFlightsByDayWithBreak(flights: Flight[]) {
+  //console.log(flights[0].scheduledDate);
   const result: any[] = []
-  let currentDay = flights[0]?.scheduledDate ?? ''
+  let currentDay = flights.length > 0 ? flights[0]?.scheduledDate ?? '' : ''
   flights.forEach((flight) => {
     const dateKey = flight.scheduledDate;
     if (dateKey !== currentDay) {
@@ -218,8 +221,35 @@ function groupFlightsByDayWithBreak(flights: Flight[]) {
     }
     result.push({ ...flight, isDaybreak: false, date: dateKey })
   })
+  //console.log(result);
   return result
 };
+
+// function paginateFlights(flightList: any[]) {
+//   const pages: any[][] = []
+//   let currentPage: any[] = []
+//   let rowCount = 0
+
+//   for (const item of flightList) {
+//     const linesNeeded = item.isDaybreak ? 2 : 1
+
+//     if (rowCount + linesNeeded > pageSize) {
+//       pages.push(currentPage)
+//       if (pages.length >= maxPages) break
+//       currentPage = []
+//       rowCount = 0
+//     }
+
+//     currentPage.push(item)
+//     rowCount += linesNeeded
+//   }
+
+//   if (currentPage.length > 0) {
+//     pages.push(currentPage)
+//   }
+
+//   return pages
+// };
 
 function paginateFlights(flightList: any[]) {
   const pages: any[][] = []
@@ -229,13 +259,10 @@ function paginateFlights(flightList: any[]) {
   for (const item of flightList) {
     const linesNeeded = item.isDaybreak ? 2 : 1
 
-    if ((rowCount + linesNeeded == pageSize+1)&& linesNeeded ==2) {
-      currentPage.push(item)
-      rowCount += linesNeeded
-    }
     if (rowCount + linesNeeded > pageSize) {
       pages.push(currentPage)
       if (pages.length === maxPages - 1) {
+        // Chỉ còn 1 page được phép nữa, đẩy hết phần còn lại vào đó rồi thoát
         const remaining = flightList.slice(flightList.indexOf(item))
         currentPage = []
         rowCount = 0
@@ -257,7 +284,6 @@ function paginateFlights(flightList: any[]) {
       currentPage = []
       rowCount = 0
     }
-
 
     currentPage.push(item)
     rowCount += linesNeeded
@@ -316,8 +342,8 @@ const formatDateToFlightMessage = (dateString: string): string => {
     if (isNaN(date.getTime())) {
         throw new Error('Invalid date format');
     }
-    const dayOfWeek = daysOfWeek[date.getDay()] ?? ''
-    const month     = months[date.getMonth()] ?? ''
+    const dayOfWeek = daysOfWeek[date.getDay()] ?? '';
+    const month = months[date.getMonth()] ?? '';
     const day = date.getDate();
     const year = date.getFullYear();
     return `FLIGHTS FOR ${dayOfWeek.toUpperCase()} ${month.toUpperCase()} ${day}, ${year}`;
@@ -351,9 +377,8 @@ const loadconfig = async () => {
   }
 };
 
-const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null)
-const intervalLoadConfig  = ref<ReturnType<typeof setInterval> | null>(null)
-const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
+const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null);
+const intervalLoadConfig = ref<ReturnType<typeof setInterval> | null>(null);
 onMounted(async () => {
   await loadAll()
   startPolling()
@@ -362,11 +387,11 @@ onMounted(async () => {
   maxPages = configs.configDevice.maxPages;
   pageInterval = configs.configDevice.pageInterval;
   reloadInterval = configs.configDevice.reloadInterval;
-  await loadFlights(configs.configDevice.rollOn, configs.configDevice.rollOff)
+  await loadFlights(configs.configDevice.rollOn, configs.configDevice.rollOff);
   autoRotatePages()
   intervalLoadFlights.value = setInterval(async () => 
   {
-    await loadFlights(configs.configDevice.rollOn, configs.configDevice.rollOff)
+    await loadFlights(configs.configDevice.rollOn, configs.configDevice.rollOff);
   }, reloadInterval);
   intervalLoadConfig.value = setInterval(async () => 
   {
@@ -382,22 +407,18 @@ function autoRotatePages() {
 
 const pagedGroups1 = computed(() => {
   const pageCount = pagedGroupsData.value.length;
-  if (currentPage.value >= pageCount) {
-    currentPage.value = 0;
-  }
+  if (currentPage.value >= pageCount) {currentPage.value = 0;}
   return pagedGroupsData.value[0]
 });
 
 const pagedGroups = computed(() => {
   const pageCount = pagedGroupsData.value.length;
-  if (currentPage.value >= pageCount) {
-    currentPage.value = 0; // Reset về trang đầu nếu vượt quá
-  }
+  if (currentPage.value >= pageCount) {currentPage.value = 0;}
   return pagedGroupsData.value[1]
 });
 
 
-onUnmounted( () => {
+onUnmounted(() => {
   stopPolling()
   if (intervalId.value) {
       clearInterval(intervalId.value);
@@ -412,7 +433,6 @@ onUnmounted( () => {
     intervalLoadConfig.value = null;
   }
   });
-  
 
 onBeforeMount(() => {
   loadCityMap();

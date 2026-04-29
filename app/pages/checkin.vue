@@ -49,9 +49,6 @@
   let timeClose = ref<Date | null>(null);
   let timeStart = ref<Date | null>(null);
 
- 
-  // const urlCountries = 'http://172.17.18.12:8085/api/Countries';
-  // const urlHub = 'http://172.17.18.12:8084/dashboardHub';
 
    const urlHub = config.public.urlHub;
    const urlCountries = `${config.public.apiBase}/Countries`;
@@ -111,7 +108,7 @@ const receiverUpdate = () => {
     time.value        = formattedTime(`${data.timeMcdt}`);
     nameCounter.value = `${data.name}`;
     location.value    = `${data.location}`;
-
+    //console.log(data);
     const now = new Date();
     isManual.value  = data.auto !== "False";
     isOnTime.value  = now > timeStart.value && now < timeClose.value;

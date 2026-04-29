@@ -1,11 +1,11 @@
 <template>
-    <div class="header1">
+    <div class="header1" :style="bgStyle">
         <div class="logo1">
-            <img class="logoaht1" src="/img/logo/AHTLogo.png" alt="" title="">
+            <img class="logoaht1" :src="theme.logoUrl" alt="" title="">
         </div>
         <div class="text1">
-            <img class="logoaht1" src="/img/logo/Icon-Arrival.png" alt="" title="">
-            <p>ARRIVALS</p>
+            <img class="logoaht1" :src="theme.iconArrUrl" alt="" title="">
+            <p :style="txtStyle">ARRIVALS</p>
         </div>
         
     </div>
@@ -13,7 +13,24 @@
 </template>
 
 <script setup lang="ts">
+const { theme, loadTheme, startPolling } = useHeaderTheme()
 
+onMounted(async () => {
+  await loadTheme()
+  startPolling()
+})
+
+onUnmounted(() => {
+  const { stopPolling } = useHeaderTheme()
+  stopPolling()
+})
+
+const bgStyle = computed(() =>
+  theme.value.bgColor ? { backgroundColor: theme.value.bgColor } : {}
+)
+const txtStyle = computed(() =>
+  theme.value.textColor ? { color: theme.value.textColor } : {}
+)
 </script>
 
 <style>

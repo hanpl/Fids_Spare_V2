@@ -75,7 +75,7 @@ const timeLoadFlight  = 40
 
 definePageMeta({ layout: 'checkinlayout' })
 
-const { loadAll, getLogoUrl } = useAirlineLogos('FullScreen')
+const { loadAll, getLogoUrl, startPolling, stopPolling } = useAirlineLogos('FullScreen')
 
 interface Flight {
   id: string; scheduledDate: string; schedule: string; estimated: string
@@ -206,6 +206,7 @@ onMounted(async () => {
     intervalId.value = null
   }
   await loadAll()
+  startPolling()
   await connectHub()
   await fetchFlights()
   await loadCityMap()
@@ -217,6 +218,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  stopPolling()
   if (intervalId.value)    clearInterval(intervalId.value)
   if (dateIntervalId.value)  clearInterval(dateIntervalId.value)
   if (checkIntervalId.value) clearInterval(checkIntervalId.value)

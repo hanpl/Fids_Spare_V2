@@ -1,14 +1,44 @@
 <template>
     <Gate v-if="gate" />
-    <DepCollins v-if="depCollins" />
     <Checkin v-if="checkin" />
-
+    <SortingArr v-if="sortingArr" />
+    <SortingDep v-if="sortingDep" />
+    <Arr85 v-if="arr85" />
+    <Dep v-if="dep" />
+    <DepT1In v-if="depT1In" />
+    <DepT1Out v-if="depT1Out" />
+    <DepCollins v-if="depCollins" />
+    <DepACollins v-if="depACollins" />
+    <DepBCollins v-if="depBCollins" />
+    <DepDepCollins v-if="depDepCollins" />
+    <DepLed v-if="depLed" />
+    <Arr v-if="arr" />
+    <ArrClaim v-if="arrClaim" />
+    <ArrCollins v-if="arrCollins"/>
+    <DepArrCollins v-if="deparrCollins"/>
+    <Ahtlogo v-if="ahtlogo" />
 </template>
   <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
-  import DepCollins from './Departures_Collins.vue';
-  import Checkin from './checkin.vue';
   import Gate from './gate.vue';
+  import Checkin from './checkin.vue';
+  import SortingArr from './SortingArr.vue';
+  import SortingDep from './SortingDep.vue';
+  import Arr85 from './Arrival85.vue';
+  //import Dep from './Departures.vue';
+  import DepT1In from './DeparturesT1In.vue';
+  import DepT1Out from './DeparturesT1Out.vue';
+  import DepCollins from './Departures_Collins.vue';
+  import DepACollins from './DeparturesA_Collins.vue';
+  import DepBCollins from './DeparturesB_Collins.vue';
+  import DepDepCollins from './DeparturesDep_Collins.vue';
+  //import DepLed from './DeparturesLED.vue';
+  import Arr from './Arrival.vue';
+  import ArrClaim from './ArrivalClaim.vue';
+  //import ArrCollins from './Arrival_Collins.vue';
+  import DepArrCollins from './DepArr_Collins.vue';
+
+
   const gate = ref(false);
   const checkin = ref(false);
   const sortingArr = ref(false);
@@ -18,7 +48,7 @@
   const depT1In = ref(false); 
   const depT1Out = ref(false); 
   const depCollins = ref(false);
-  const depACollins = ref(false);
+  const depACollins = ref(false);   
   const depBCollins = ref(false);
   const depDepCollins = ref(false);
   const depLed = ref(false);

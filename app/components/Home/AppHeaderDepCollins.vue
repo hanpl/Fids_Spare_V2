@@ -1,11 +1,11 @@
 <template>
-    <div class="headerdc">
+    <div class="headerdc" :style="bgStyle">
         <div class="logodc">
-            <img class="logoahtdc" src="/logos/logo_dit.png" alt="" title="">
+            <img class="logoahtdc" :src="theme.logoUrl" alt="" title="">
         </div>
         <div class="textdc">
-            <img class="logoflightdc" src="/logos/Icon-Departure.png" alt="" title="">
-            <p class="cl">DEPARTURES</p>
+            <img class="logoflightdc" :src="theme.iconDepUrl" alt="" title="">
+            <p class="cl" :style="txtStyle">DEPARTURES</p>
         </div>
         
     </div>
@@ -13,12 +13,29 @@
 </template>
 
 <script setup lang="ts">
+const { theme, loadTheme, startPolling } = useHeaderTheme()
 
+onMounted(async () => {
+  await loadTheme()
+  startPolling()
+})
+
+onUnmounted(() => {
+  const { stopPolling } = useHeaderTheme()
+  stopPolling()
+})
+
+const bgStyle = computed(() =>
+  theme.value.bgColor ? { backgroundColor: theme.value.bgColor } : {}
+)
+const txtStyle = computed(() =>
+  theme.value.textColor ? { color: theme.value.textColor } : {}
+)
 </script>
 
 <style>
 .headerdc {
-    background-color: #121441 !important;
+    background-color: #121441;
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -43,7 +60,7 @@
     width: 70vw;
 }
 .textdc {
-    color: white !important;
+    color: white ;
     font-weight: 100;
     font-size: large;
     margin-right: 9px;

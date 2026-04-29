@@ -17,10 +17,10 @@
 <script setup lang="ts">
 const props = defineProps<{
   lineCode: string
-  location?: string   // mặc định 'FIDs', có thể truyền 'HalfScreen', 'Web'...
+  location?: string   // mặc định 'FIDs', có thể truyền 'Stand', 'HalfScreen', 'FullScreen', 'Web'...
 }>()
 
-const { getLogoUrl } = useAirlineLogos()
+const { getLogoUrl } = useAirlineLogos(props.location ?? 'FIDs')
 
 const logoUrl = computed(() => {
   return getLogoUrl(props.lineCode)
