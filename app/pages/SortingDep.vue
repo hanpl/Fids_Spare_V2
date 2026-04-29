@@ -1,7 +1,7 @@
 <template>
     <div class="headerAd">
         <div class="logo">
-            <img class="logoaht" src="/img/logo/LogoBgW.png" alt="" title="">
+            <img class="logoaht" src="/logos/AHTLogo.png" alt="" title="">
         </div>
         <div class="textAd" style="color: #2b388f !important;">
             <p>{{ configs.configDevice.name }}</p>
