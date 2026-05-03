@@ -353,9 +353,10 @@ const loadconfig = async () => {
 
 const intervalLoadFlights = ref<ReturnType<typeof setInterval> | null>(null)
 const intervalLoadConfig  = ref<ReturnType<typeof setInterval> | null>(null)
-const { loadAll } = useAirlineLogos('FIDs')
+const { loadAll, startPolling, stopPolling } = useAirlineLogos('FIDs')
 onMounted(async () => {
   await loadAll()
+  startPolling()
   await loadconfig()
   pageSize = configs.configDevice.pageSize;
   maxPages = configs.configDevice.maxPages;
@@ -397,6 +398,7 @@ const pagedGroups = computed(() => {
 
 
 onUnmounted( () => {
+  stopPolling()
   if (intervalId.value) {
       clearInterval(intervalId.value);
       intervalId.value = null;

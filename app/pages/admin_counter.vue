@@ -18,6 +18,7 @@
                   <th class="checkput">Nomal</th>
                   <th class="checkput">Eco</th>
                   <th class="checkput">Bus</th>
+                  <th class="checkput">Other</th>
                   <th>Remark</th>
                   <th class="checkput">Auto</th>
                 </tr>
@@ -41,20 +42,24 @@
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ convertToTimeOnly(item.closeTime) }}</td>
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ item.flight }}</td>
                   <td class="checkput" @click.stop="updateMode(item, 'Nomal')">
-                    <i :class="['auto fa-2xl', item.mode !== 'Nomal' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                    <i :class="['auto fa-2x', item.mode !== 'Nomal' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                   <td class="checkput" @click.stop="updateMode(item, 'Eco')">
-                    <i :class="['auto fa-2xl', item.mode !== 'Eco' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                    <i :class="['auto fa-2x', item.mode !== 'Eco' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                   <td class="checkput" @click.stop="updateMode(item, 'Bus')">
-                    <i :class="['auto fa-2xl', item.mode !== 'Bus' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                    <i :class="['auto fa-2x', item.mode !== 'Bus' ? 'far fa-circle' : 'fas fa-dot-circle']"
+                       style="font-size: x-large; color:#0b1c60"></i>
+                  </td>
+                  <td class="checkput" @click.stop="updateMode(item, 'Other')">
+                    <i :class="['auto fa-2x', item.mode !== 'Other' ? 'far fa-circle' : 'fas fa-dot-circle']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                   <td :class="item.connectionId ? 'text-green' : 'text-gray'">{{ item.status }}</td>
                   <td class="checkput" @click.stop="updateAuto(item)">
-                    <i :class="['auto fas fa-2xl', item.auto !== 'True' ? 'fa-toggle-off' : 'fa-toggle-on']"
+                    <i :class="['auto fas fa-2x', item.auto !== 'True' ? 'fa-toggle-off' : 'fa-toggle-on']"
                        style="font-size: x-large; color:#0b1c60"></i>
                   </td>
                 </tr>
@@ -72,76 +77,66 @@
               </thead>
             </table>
 
-            <div class="container">
-              <!-- Nomal -->
-              <div class="row">
-                <span class="label">Nomal:</span>
-                <span class="value">{{ responseDataFlight.nomal || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="toggleSelectNomal"></i>
-              </div>
-              <div class="row" v-if="isNomalVisible">
-                <div class="form-group" style="width: 100%;">
-                  <select multiple class="custom-select" v-model="selectedOptionsNomal" style="height: 200px !important;">
-                    <option v-for="(item, index) in responseFileNameForNomal" :key="index" :value="item">{{ item }}</option>
-                  </select>
+            <div class="row" style="margin: 10px;">
+              <div class="col-12">
+                  <!-- Nomal -->
+                <div class="row">
+                  <span class="label">Nomal:</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.nomal" :src="responseDataFlight.nomal" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
+                  <button class="btn-pick" @click="openImagePicker('nomal')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
                 </div>
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                  <span>{{ selectedOptionsNomal.join(',') }}</span>
-                  <i class="fas fa-upload icon" @click="SelectNomal(selectedOptionsNomal.join(','))"></i>
-                </div>
-              </div>
 
-              <!-- Economy -->
-              <div class="row">
-                <span class="label">Economy:</span>
-                <span class="value">{{ responseDataFlight.eco || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="toggleSelectEco"></i>
-              </div>
-              <div class="row" v-if="isEcoVisible">
-                <div class="form-group" style="width: 100%;">
-                  <select multiple class="custom-select" v-model="selectedOptionsEco" style="height: 200px !important;">
-                    <option v-for="(item, index) in responseFileName" :key="index" :value="item">{{ item }}</option>
-                  </select>
+                <!-- Economy -->
+                <div class="row">
+                  <span class="label">Economy:</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.eco" :src="responseDataFlight.eco" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
+                  <button class="btn-pick" @click="openImagePicker('eco')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
                 </div>
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                  <span>{{ selectedOptionsEco.join(',') }}</span>
-                  <i class="fas fa-upload icon" @click="SelectEco(selectedOptionsEco.join(','))"></i>
-                </div>
-              </div>
 
-              <!-- Business -->
-              <div class="row">
-                <span class="label">Business:</span>
-                <span class="value">{{ responseDataFlight.bus || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="toggleSelectBus"></i>
-              </div>
-              <div class="row" v-if="isBusVisible">
-                <div class="form-group" style="width: 100%;">
-                  <select multiple class="custom-select" v-model="selectedOptionsBus" style="height: 200px !important;">
-                    <option v-for="(item, index) in responseFileName" :key="index" :value="item">{{ item }}</option>
-                  </select>
+                <!-- Business -->
+                <div class="row">
+                  <span class="label">Business:</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.bus" :src="responseDataFlight.bus" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
+                  <button class="btn-pick" @click="openImagePicker('bus')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
                 </div>
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                  <span>{{ selectedOptionsBus.join(',') }}</span>
-                  <i class="fas fa-upload icon" @click="SelectBus(selectedOptionsBus.join(','))"></i>
-                </div>
-              </div>
 
-              <!-- Manual -->
-              <div class="row">
-                <span class="label">Set Manual:</span>
-                <span class="value">{{ responseDataFlight.manual || 'Loading...' }}</span>
-                <i class="fas fa-images icon" @click="toggleSelectManual"></i>
-              </div>
-              <div class="row" v-if="isManualVisible">
-                <div class="form-group" style="width: 100%;">
-                  <select multiple class="custom-select" v-model="selectedOptionsManual" style="height: 200px !important;">
-                    <option v-for="(item, index) in responseFileName" :key="index" :value="item">{{ item }}</option>
-                  </select>
+                <!-- Manual -->
+                <div class="row">
+                  <span class="label">Set Manual:</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.manual" :src="responseDataFlight.manual" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
+                  <button class="btn-pick" @click="openImagePicker('manual')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
                 </div>
-                <div style="display: flex; justify-content: space-between; width: 100%;">
-                  <span>{{ selectedOptionsManual.join(',') }}</span>
-                  <i class="fas fa-upload icon" @click="SelectManual(selectedOptionsManual.join(','))"></i>
+
+                <!-- # -->
+                <div class="row">
+                  <span class="label">Set #Other:</span>
+                  <span class="value">
+                    <img v-if="responseDataFlight.other" :src="responseDataFlight.other" class="thumb-preview" />
+                    <span v-else class="thumb-empty">—</span>
+                  </span>
+                  <button class="btn-pick" @click="openImagePicker('other')">
+                    <i class="fas fa-images"></i> Chọn
+                  </button>
                 </div>
               </div>
             </div>
@@ -149,8 +144,8 @@
             <div class="row">
               <div class="col-12" style="margin-top: 10px;">
                 <div class="card">
-                  <div class="card-header" style="height: 42px; margin-top: -4px; background-color: #31d2f2;">
-                    <h3 class="card-title" style="font-weight: bold;">Airline Code</h3>
+                  <div class="card-header" style="height: 42px; margin-top: -4px; background-color: #31d2f2; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="" style="font-weight: bold;">Airline Code</h3>
                     <div class="card-tools">
                       <div class="input-group input-group-sm" style="width: 150px;">
                         <input type="text" v-model="inputValueLineCode"
@@ -177,15 +172,45 @@
       </div>
     </div>
   </section>
+
+  <!-- Image Picker Modal -->
+  <Teleport to="body">
+    <div v-if="picker.visible" class="picker-overlay" @click.self="picker.visible = false">
+      <div class="picker-modal">
+        <div class="picker-header">
+          <span>Select images for <strong>{{ picker.field }}</strong></span>
+          <span style="cursor:pointer;font-size:1.4em;line-height:1;font-weight:400" @click="picker.visible = false">×</span>
+        </div>
+        <div class="picker-grid">
+          <div
+            v-for="img in imageLibrary"
+            :key="img.id"
+            :class="['picker-item', picker.selected.includes(img.url) ? 'selected' : '']"
+            @click="toggleImage(img.url)"
+          >
+            <img :src="img.url" :alt="img.fileName" />
+            <span>{{ img.fileName }}</span>
+          </div>
+        </div>
+        <div class="picker-footer">
+          <span class="picker-preview">{{ picker.selected.length }} image(s) selected</span>
+          <button class="btn btn-primary" @click="confirmPicker">Save</button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
 
 <script setup lang="ts">
 import * as signalR from '@microsoft/signalr';
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, reactive, onMounted, onUnmounted } from 'vue';
+import '~/assets/css/fontawesome/all.min.css';
 
-const urlHub = 'https://localhost:7079/dashboardHub';
-const urlApi  = 'https://localhost:7079/api';
-const urlFileServer = 'http://localhost:3001';
+definePageMeta({ layout: 'checkinlayout' });
+
+const urlHub    = 'https://localhost:7248/dashboardHub';
+const urlApi    = 'https://localhost:7079/api';
+const urlImages = 'http://localhost:5051/api/Images';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -205,6 +230,7 @@ interface CounterItem {
   eco: string;
   bus: string;
   manual: string;
+  other: string;
 }
 
 interface FlightImage {
@@ -213,37 +239,76 @@ interface FlightImage {
   eco: string;
   bus: string;
   manual: string;
+  other: string;
 }
 
 interface LineCode {
   name: string;
 }
 
+interface ImageItem {
+  id: string;
+  fileName: string;
+  url: string;
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 
-const responseData        = ref<CounterItem[]>([]);
-const responseLineCode    = ref<LineCode[]>([]);
-const responseFileName    = ref<string[]>([]);
-const responseFileNameForNomal = ref<string[]>([]);
-const responseDataFlight  = ref<FlightImage>({ name: '', nomal: '', eco: '', bus: '', manual: '' });
+const responseData       = ref<CounterItem[]>([]);
+const responseLineCode   = ref<LineCode[]>([]);
+const responseDataFlight = ref<FlightImage>({ name: '', nomal: '', eco: '', bus: '', manual: '', other: '' });
+const imageLibrary       = ref<ImageItem[]>([]);
 
-const inputValueLineCode  = ref('');
-const isScrolled          = ref(false);
+const inputValueLineCode = ref('');
+const isScrolled         = ref(false);
 
-const selectedOptionsNomal  = ref<string[]>([]);
-const selectedOptionsEco    = ref<string[]>([]);
-const selectedOptionsBus    = ref<string[]>([]);
-const selectedOptionsManual = ref<string[]>([]);
+const picker = reactive<{ visible: boolean; field: string; selected: string[] }>({
+  visible: false,
+  field: '',
+  selected: [],
+});
 
-const isNomalVisible  = ref(false);
-const isEcoVisible    = ref(false);
-const isBusVisible    = ref(false);
-const isManualVisible = ref(false);
+// ─── Image Gallery Picker ─────────────────────────────────────────────────────
 
-const toggleSelectNomal  = () => { isNomalVisible.value  = !isNomalVisible.value; };
-const toggleSelectEco    = () => { isEcoVisible.value    = !isEcoVisible.value; };
-const toggleSelectBus    = () => { isBusVisible.value    = !isBusVisible.value; };
-const toggleSelectManual = () => { isManualVisible.value = !isManualVisible.value; };
+const fetchImageLibrary = async () => {
+  if (imageLibrary.value.length > 0) return;
+  try {
+    const res = await fetch(urlImages);
+    const json = await res.json();
+    imageLibrary.value = json.data ?? [];
+  } catch (err) {
+    console.error('[fetchImageLibrary]', err);
+  }
+};
+
+
+
+const openImagePicker = async (field: string) => {
+  await fetchImageLibrary();
+  picker.field = field;
+  const current = responseDataFlight.value[field as keyof FlightImage] ?? '';
+  picker.selected = current ? [current.trim()] : [];
+  picker.visible = true;
+};
+
+const toggleImage = (url: string) => {
+  if (picker.selected.includes(url)) {
+    picker.selected = [];
+  } else {
+    picker.selected = [url];
+  }
+};
+
+const confirmPicker = async () => {
+  const value = picker.selected.join(',');
+  const field = picker.field;
+  if (field === 'nomal')       await SelectNomal(value);
+  else if (field === 'eco')    await SelectEco(value);
+  else if (field === 'bus')    await SelectBus(value);
+  else if (field === 'manual') await SelectManual(value);
+  else if (field === 'other') await SelectOther(value);
+  picker.visible = false;
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -270,20 +335,6 @@ const fetchDataLineCode = (name: string) => {
     .catch(err => console.error('[fetchDataLineCode]', err));
 };
 
-const fetchDataFileName = () => {
-  fetch(`${urlFileServer}/imageforcheckin`)
-    .then(r => r.json())
-    .then(data => { responseFileName.value = data; })
-    .catch(err => console.error('[fetchDataFileName]', err));
-};
-
-const fetchDataFileNameForNomal = () => {
-  fetch(`${urlFileServer}/imageforcheckinNonal`)
-    .then(r => r.json())
-    .then(data => { responseFileNameForNomal.value = data; })
-    .catch(err => console.error('[fetchDataFileNameForNomal]', err));
-};
-
 // ─── Airline Code Actions ─────────────────────────────────────────────────────
 
 const handleCheckLineCodeClick = () => {
@@ -305,7 +356,7 @@ const postDataLineCode = (linecode: string) => {
 
 const handleLineCodeClick = (name: string) => fetchDataLineCode(name);
 
-// ─── Image Selection ──────────────────────────────────────────────────────────
+// ─── Image Selection (save to DB) ─────────────────────────────────────────────
 
 const SelectNomal = async (name: string) => {
   if (!name || name === responseDataFlight.value.nomal) return;
@@ -313,12 +364,10 @@ const SelectNomal = async (name: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateNomal`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: name, eco: '', bus: '', manual: '' }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: name, eco: '', bus: '', manual: '', other:'' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.nomal = name;
-    isNomalVisible.value = false;
-    selectedOptionsNomal.value = [];
   } catch (err) { console.error('[SelectNomal]', err); }
 };
 
@@ -328,12 +377,10 @@ const SelectEco = async (eco: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateEco`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco, bus: '', manual: '' }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco, bus: '', manual: '', other: '' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.eco = eco;
-    isEcoVisible.value = false;
-    selectedOptionsEco.value = [];
   } catch (err) { console.error('[SelectEco]', err); }
 };
 
@@ -343,12 +390,10 @@ const SelectBus = async (bus: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateBus`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus, manual: '' }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus, manual: '', other: '' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.bus = bus;
-    isBusVisible.value = false;
-    selectedOptionsBus.value = [];
   } catch (err) { console.error('[SelectBus]', err); }
 };
 
@@ -358,13 +403,24 @@ const SelectManual = async (manual: string) => {
     const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateManual`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus: '', manual }),
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus: '', manual, other: '' }),
     });
     if (!res.ok) throw new Error('Update failed');
     responseDataFlight.value.manual = manual;
-    isManualVisible.value = false;
-    selectedOptionsManual.value = [];
   } catch (err) { console.error('[SelectManual]', err); }
+};
+
+const SelectOther = async (other: string) => {
+  if (!other || other === responseDataFlight.value.other) return;
+  try {
+    const res = await fetch(`${urlApi}/UpdateModeCounter/UpdateOther`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: responseDataFlight.value.name, nomal: '', eco: '', bus: '', manual:'', other }),
+    });
+    if (!res.ok) throw new Error('Update failed');
+    responseDataFlight.value.other = other;
+  } catch (err) { console.error('[SelectOther]', err); }
 };
 
 // ─── Counter Row Actions ──────────────────────────────────────────────────────
@@ -376,6 +432,7 @@ const handleSetupClick = (item: CounterItem) => {
     eco:    item.eco,
     bus:    item.bus,
     manual: item.manual,
+    other:  item.other,
   };
 };
 
@@ -429,9 +486,9 @@ const connectHub = async () => {
     .withAutomaticReconnect([0, 2000, 10000, 30000])
     .configureLogging(signalR.LogLevel.Information)
     .build();
+  receiverUpdate(); // register handler BEFORE start so OnConnectedAsync push is not missed
   try {
     await hubConnection.value.start();
-    receiverUpdate();
   } catch (err) {
     console.error('[SignalR] Connection failed:', err);
     startInterval();
@@ -457,8 +514,6 @@ const startInterval = () => {
 
 onMounted(async () => {
   await connectHub();
-  fetchDataFileName();
-  fetchDataFileNameForNomal();
   fetchDataLineCode('VN');
   loadlinecode();
   window.addEventListener('scroll', handleScroll);
@@ -510,10 +565,10 @@ tr:nth-child(even) { background-color: #e8ebee; }
 
 .container {
   background-color: #f9f9f9;
-  padding: 20px;
+  padding: 1px;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  max-width: 400px;
+  box-shadow: 0 0px 5px rgba(0,0,0,0.1);
+  max-width: 23vw;
   margin: 0 auto;
   font-family: Arial, sans-serif;
 }
@@ -526,14 +581,44 @@ tr:nth-child(even) { background-color: #e8ebee; }
 }
 .row:last-child { border-bottom: none; }
 .label { font-weight: bold; color: #333; flex: 1; }
-.value { color: #555; flex: 1; text-align: center; }
-.icon {
-  color: #1e90ff;
-  font-size: 1.2em;
-  cursor: pointer;
-  transition: transform 0.2s, color 0.2s;
+.value {
+  color: #555;
+  flex: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-.icon:hover { color: #0056b3; transform: scale(1.1); }
+.thumb-preview {
+  width: 120px;
+  height: 80px;
+  object-fit: contain;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #e9e4e4;;
+}
+.thumb-empty {
+  font-size: 1.2em;
+  color: #bbb;
+}
+.text-green { color: #28a745 !important; }
+.text-gray  { color: #9e9e9e !important; }
+
+.btn-pick {
+  background: #1e90ff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 0.82em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.btn-pick:hover { background: #0056b3; }
 
 .card-body.pad.table-responsive.poisionfid {
   position: fixed;
@@ -542,4 +627,79 @@ tr:nth-child(even) { background-color: #e8ebee; }
 }
 .tabmain { width: 71vw; }
 .shrink { top: 5px; }
+
+/* ── Image Picker Modal ────────────────────────────────────────────────────── */
+.picker-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.picker-modal {
+  background: #fff;
+  border-radius: 10px;
+  width: 680px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+}
+.picker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: #31d2f2;
+  font-weight: bold;
+  font-size: 1em;
+}
+.picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px;
+  overflow-y: auto;
+  flex: 1;
+}
+.picker-item {
+  width: 140px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  padding: 6px;
+  text-align: center;
+  transition: border-color 0.15s, background 0.15s;
+}
+.picker-item img {
+  width: 100%;
+  height: 80px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+.picker-item span {
+  display: block;
+  font-size: 0.72em;
+  margin-top: 4px;
+  word-break: break-all;
+  color: #444;
+}
+.picker-item.selected {
+  border-color: #1e90ff;
+  background: #e8f4ff;
+}
+.picker-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 18px;
+  border-top: 1px solid #eee;
+}
+.picker-preview {
+  font-size: 0.9em;
+  color: #555;
+}
 </style>

@@ -1,16 +1,28 @@
 <template>
-    <div class="header">
+    <div class="header" :style="bgStyle">
         <div class="logo">
-           <a href="/"><img class="logoaht" src="/img/logo/AHT.png" alt="" title=""></a>
+           <a href="/"><img class="logoaht" :src="theme.logoCheckinUrl" alt="" title=""></a>
         </div>
-
-        
     </div>
     
 </template>
 
 <script setup lang="ts">
+const { theme, loadTheme, startPolling } = useHeaderTheme()
 
+onMounted(async () => {
+  await loadTheme()
+  startPolling()
+})
+
+onUnmounted(() => {
+  const { stopPolling } = useHeaderTheme()
+  stopPolling()
+})
+
+const bgStyle = computed(() =>
+  theme.value.bgColor ? { backgroundColor: theme.value.bgColor } : {}
+)
 </script>
 
 <style>

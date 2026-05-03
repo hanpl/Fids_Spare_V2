@@ -1,14 +1,53 @@
 <template>
     <Gate v-if="gate" />
-    <DepCollins v-if="depCollins" />
     <Checkin v-if="checkin" />
-
+    <SortingArr v-if="sortingArr" />
+    <SortingDep v-if="sortingDep" />
+    <Arr85 v-if="arr85" />
+    <Dep v-if="dep" />
+    <DepT1In v-if="depT1In" />
+    <DepT1Out v-if="depT1Out" />
+    <DepCollins v-if="depCollins" />
+    <DepACollins v-if="depACollins" />
+    <DepBCollins v-if="depBCollins" />
+    <DepDepCollins v-if="depDepCollins" />
+    <DepLed v-if="depLed" />
+    <Arr v-if="arr" />
+    <ArrClaim v-if="arrClaim" />
+    <ArrCollins v-if="arrCollins"/>
+    <DepArrCollins v-if="deparrCollins"/>
+    <EntranceA v-if="entranceA" />
+    <EntranceB v-if="entranceB" />
+    <EntranceC v-if="entranceC" />
+    <WaitingTimeA v-if="waitingTimeA" />
+    <WaitingTimeB v-if="waitingTimeB" />
+    <Ahtlogo v-if="ahtlogo" />
 </template>
   <script setup lang="ts">
   import { ref, computed, onMounted } from 'vue';
-  import DepCollins from './Departures_Collins.vue';
-  import Checkin from './checkin.vue';
   import Gate from './gate.vue';
+  import Checkin from './checkin.vue';
+  import SortingArr from './SortingArr.vue';
+  import SortingDep from './SortingDep.vue';
+  import Arr85 from './Arrival85.vue';
+  //import Dep from './Departures.vue';
+  import DepT1In from './DeparturesT1In.vue';
+  import DepT1Out from './DeparturesT1Out.vue';
+  import DepCollins from './Departures_Collins.vue';
+  import DepACollins from './DeparturesA_Collins.vue';
+  import DepBCollins from './DeparturesB_Collins.vue';
+  import DepDepCollins from './DeparturesDep_Collins.vue';
+  //import DepLed from './DeparturesLED.vue';
+  import Arr from './Arrival.vue';
+  import ArrClaim from './ArrivalClaim.vue';
+  //import ArrCollins from './Arrival_Collins.vue';
+  import DepArrCollins from './DepArr_Collins.vue';
+  import EntranceA from './EntranceA.vue';
+  import EntranceB from './EntranceB.vue';
+  import EntranceC from './FidsElevator.vue';
+  import WaitingTimeA from './WaitingTimeA.vue';
+  import WaitingTimeB from './WaitingTimeB.vue';
+
   const gate = ref(false);
   const checkin = ref(false);
   const sortingArr = ref(false);
@@ -18,7 +57,7 @@
   const depT1In = ref(false); 
   const depT1Out = ref(false); 
   const depCollins = ref(false);
-  const depACollins = ref(false);
+  const depACollins = ref(false);   
   const depBCollins = ref(false);
   const depDepCollins = ref(false);
   const depLed = ref(false);
@@ -26,6 +65,11 @@
   const arrClaim = ref(false); 
   const arrCollins = ref(false);
   const deparrCollins = ref(false);
+  const entranceA = ref(false);
+  const entranceB = ref(false);
+  const entranceC = ref(false);
+  const waitingTimeA = ref(false);
+  const waitingTimeB = ref(false);
   const ahtlogo = ref(false);
 
   const config = useRuntimeConfig()
@@ -34,7 +78,8 @@
      gate.value = false; checkin.value = false; ahtlogo.value = false; depDepCollins.value = false;
      sortingArr.value = false; sortingDep.value = false; arr85.value = false; deparrCollins.value = false;
      dep.value = false; arr.value = false; arrClaim.value = false; depLed.value = false;  depCollins.value = false;
-     arrCollins.value = false; depACollins.value = false; depBCollins.value = false; depT1In.value = false; depT1In.value = false
+     arrCollins.value = false; depACollins.value = false; depBCollins.value = false; depT1In.value = false; depT1Out.value = false;
+     entranceA.value = false; entranceB.value = false; entranceC.value = false; waitingTimeA.value = false; waitingTimeB.value = false
   };
 
 
@@ -115,6 +160,26 @@
               case 'DepArrCollins':
                   offMode();
                   deparrCollins.value = true;
+                  break;
+              case 'EntranceA':
+                  offMode();
+                  entranceA.value = true;
+                  break;
+              case 'EntranceB':
+                  offMode();
+                  entranceB.value = true;
+                  break;
+              case 'EntranceC':
+                  offMode();
+                  entranceC.value = true;
+                  break;
+              case 'WaitingTimeA':
+                  offMode();
+                  waitingTimeA.value = true;
+                  break;
+              case 'WaitingTimeB':
+                  offMode();
+                  waitingTimeB.value = true;
                   break;
               default:
                   offMode();

@@ -1,0 +1,9 @@
+{
+  "logoUrl": "/logos/logo_dit.png",
+  "ahtLogoUrl": "/logos/AHTLogo.png",
+  "iconDepUrl": "/logos/Icon-Departure.png",
+  "iconArrUrl": "/logos/Icon-Arrival.png",
+  "logoCheckinUrl": "/logos/AHT.png",
+  "bgColor": "#121441",
+  "textColor": "#ffffff"
+}

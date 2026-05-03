@@ -1,10 +1,10 @@
 <template>
     <div>
          <!-- Mode ưu tiên -->
-        <div v-if="Model" class="Model"> 
+        <div v-if="Model" class="Model">
           <div v-if="isOnTime" class="isOnTime">
             <div v-if="Nomal" style="" class="Nomal">
-              <img alt="Vuelogo" :src="`/img/1920x480/${showImghafl}?timestamp=${new Date().getTime()}`" @error="handleImageError2(showImghafl)" 
+              <img alt="Vuelogo" :src="showImghafl" @error="handleImageError2"
               style="overflow: hidden; max-width: 100vw;height: 44.5vh; background-color: #244093;"/>
               <div class="noidungtext" style="background-color: #244093; max-width: 100vw;height: 55.5vh;">
                 <span>{{ destination }}</span>
@@ -15,18 +15,18 @@
               </div>
             </div>
             <div v-else class="!Nomal">
-              <img alt="Vuelogo" :src="`/img/fullscreen/${showImg}?timestamp=${new Date().getTime()}`" @error="handleImageError(showImg)" 
+              <img alt="Vuelogo" :src="showImg" @error="handleImageError"
               style="overflow: hidden; max-width: 100vw;height: auto;"/>
             </div>
           </div>
           <div v-else class="!isOnTime">
-            <img  alt="Vuelogo" :src="`/img/fullscreen/${images[currentIndex]}?timestamp=${new Date().getTime()}`"class="slideshow-image" />
+            <img alt="Vuelogo" :src="`/img/fullscreen/${images[currentIndex]}?timestamp=${new Date().getTime()}`" class="slideshow-image" />
           </div>
         </div>
         <!-- End Mode ưu tiên -->
         <div v-else class="!Model">
-          <img v-if="isManual" alt="Vuelogo" :src="`/img/fullscreen/${images[currentIndex]}?timestamp=${new Date().getTime()}`"class="slideshow-image"/>
-          <img v-else alt="VuelogoManual" :src="`/img/fullscreen/${showImgManual}?timestamp=${new Date().getTime()}`"class="slideshow-image" @error="handleImageError(showImgManual)" />
+          <img v-if="isManual" alt="Vuelogo" :src="`/img/fullscreen/${images[currentIndex]}?timestamp=${new Date().getTime()}`" class="slideshow-image"/>
+          <img v-else alt="VuelogoManual" :src="showImgManual" class="slideshow-image" @error="handleImageError" />
         </div>
     </div>
 </template>
@@ -49,9 +49,6 @@
   let timeClose = ref<Date | null>(null);
   let timeStart = ref<Date | null>(null);
 
- 
-  // const urlCountries = 'http://172.17.18.12:8085/api/Countries';
-  // const urlHub = 'http://172.17.18.12:8084/dashboardHub';
 
    const urlHub = config.public.urlHub;
    const urlCountries = `${config.public.apiBase}/Countries`;
@@ -78,50 +75,62 @@ const changeImage = () => {
 };
 
 
+// ─── SignalR ──────────────────────────────────────────────────────────────────
+
 const hubConnection = ref<signalR.HubConnection | null>(null);
 const connectHub = async () => {
   hubConnection.value = new signalR.HubConnectionBuilder()
       .withUrl(urlHub)
-      .withAutomaticReconnect([0, 2000, 10000, 30000])   // ← THÊM
+      .withAutomaticReconnect([0, 2000, 10000, 30000])
       .configureLogging(signalR.LogLevel.Information)
-      .build()
+      .build();
 
-    hubConnection.value.onreconnected(() => { receiverUpdate() })  // ← THÊM
-    hubConnection.value.onclose(() => {startInterval();})
+  hubConnection.value.onreconnected(() => { receiverUpdate(); });
+  hubConnection.value.onclose(() => { startInterval(); });
 
-    try {
-      await hubConnection.value.start()
-      receiverUpdate()
-    } catch (err) {
-      console.error('SignalR Connection failed to start:', err);
-      startInterval(); // Khởi động lại kết nối nếu có lỗi
-    }
+  receiverUpdate(); // register BEFORE start() — OnConnectedAsync fires immediately on connect
+
+  try {
+    await hubConnection.value.start();
+  } catch (err) {
+    console.error('SignalR Connection failed to start:', err);
+    startInterval();
+  }
 };
 
-const receiverUpdate= () => {
-{
-    // Lắng nghe sự kiện "SendToClient" từ server
-    hubConnection.value!.off("SendToClient");
-    hubConnection.value!.on("SendToClient", (data: any) => {
-        timeStart.value = new Date(`${data.openTime}`);
-        timeClose.value = new Date(`${data.closeTime}`);
-        destination.value = getFullCityName(`${data.setImg}`);
-        flight.value = `${data.flight}`;
-        time.value = formattedTime(`${data.timeMcdt}`);
-        nameCounter.value = `${data.name}`;
-        location.value = `${data.location}`;
-        isManual.value = data.auto === "False" ? false : true;
-        Model.value = data.auto === "False" || new Date() < timeStart.value ? false : true;
-        Nomal.value = data.mode === "Nomal" &&  new Date() < timeClose.value &&  new Date() > timeStart.value ? true : false;
-        isOnTime.value = new Date() < timeClose.value &&  new Date() > timeStart.value ? true : false;
-        showImg.value = data.mode === "Eco"
-        ? (!data.eco ? `${data.autoImg}_1920x1080.png` : `${data.eco}`)
-        : (!data.bus ? `${data.autoImg}_1920x1080.png` : `${data.bus}`);
-        showImgManual.value = !data.manual ? `${data.autoImg}_1920x1080.png` : `${data.manual}`;
-        showImghafl.value = !data.nomal || data.nomal === 'null' ? `${data.autoImg}_1920x480.png` : data.nomal
-        startCheckingFlights();
-    });
-}
+const receiverUpdate = () => {
+  hubConnection.value!.off("SendToClient");
+  hubConnection.value!.on("SendToClient", (data: any) => {
+    timeStart.value = new Date(`${data.openTime}`);
+    timeClose.value = new Date(`${data.closeTime}`);
+    destination.value = getFullCityName(`${data.setImg}`);
+    flight.value      = `${data.flight}`;
+    time.value        = formattedTime(`${data.timeMcdt}`);
+    nameCounter.value = `${data.name}`;
+    location.value    = `${data.location}`;
+    //console.log(data);
+    const now = new Date();
+    isManual.value  = data.auto !== "False";
+    isOnTime.value  = now > timeStart.value && now < timeClose.value;
+    Nomal.value     = data.mode === "Nomal" && isOnTime.value;
+    Model.value     = data.auto !== "False" && now >= timeStart.value;
+
+    const f1080 = `/img/fullscreen/${data.autoImg}_1920x1080.png`;
+    const f480  = `/img/1920x480/${data.autoImg}_1920x480.png`;
+
+    // Mỗi mode chỉ chứa 1 URL duy nhất — lấy trực tiếp, fallback nếu rỗng
+    showImghafl.value   = data.nomal  || f480;
+    showImgManual.value = data.manual || f1080;
+
+    // showImg dùng cho Eco / Bus / Other (tùy mode hiện tại)
+    const mode = data.mode ?? '';
+    if (mode === 'Eco')        showImg.value = data.eco   || f1080;
+    else if (mode === 'Bus')   showImg.value = data.bus   || f1080;
+    else if (mode === 'Other') showImg.value = data.other || f1080;
+    else                       showImg.value = data.eco   || f1080;
+
+    startCheckingFlights();
+  });
 };
 
 const formattedTime = (bien: string) => {
@@ -147,12 +156,12 @@ const getFullCityName = (shortCode: string): string => {
       return  airport ? airport.nameAirport : 'Not Found'
 };
 
-const handleImageError = (item: string) => {
-  showImg.value = 'AHT_1920x1080.png';
+const handleImageError = () => {
+  showImg.value = '/img/fullscreen/AHT_1920x1080.png';
 };
 
-const handleImageError2 = (item: string) => {
-   showImghafl.value = 'Logo_1920x480.png';
+const handleImageError2 = () => {
+  showImghafl.value = '/img/1920x480/Logo_1920x480.png';
 };
 
 // Kiểm tra thời gian hiện tại > CloseTime
@@ -242,18 +251,10 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-    stopCheckingFlights();
-    if (intervalId.value) clearInterval(intervalId.value);
-    if (hubConnection.value) 
-    {
-      hubConnection.value.stop().then(() => {});
-    }
-    if (intervalIdaht.value !== null) 
-    {
-      clearInterval(intervalIdaht.value)
-      intervalIdaht.value = null
-    }
-
+  stopCheckingFlights();
+  if (intervalId.value !== null) clearInterval(intervalId.value);
+  if (intervalIdaht.value !== null) clearInterval(intervalIdaht.value);
+  hubConnection.value?.stop();
 });
 </script>
   
