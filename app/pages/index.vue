@@ -16,6 +16,11 @@
     <ArrClaim v-if="arrClaim" />
     <ArrCollins v-if="arrCollins"/>
     <DepArrCollins v-if="deparrCollins"/>
+    <EntranceA v-if="entranceA" />
+    <EntranceB v-if="entranceB" />
+    <EntranceC v-if="entranceC" />
+    <WaitingTimeA v-if="waitingTimeA" />
+    <WaitingTimeB v-if="waitingTimeB" />
     <Ahtlogo v-if="ahtlogo" />
 </template>
   <script setup lang="ts">
@@ -37,7 +42,11 @@
   import ArrClaim from './ArrivalClaim.vue';
   //import ArrCollins from './Arrival_Collins.vue';
   import DepArrCollins from './DepArr_Collins.vue';
-
+  import EntranceA from './EntranceA.vue';
+  import EntranceB from './EntranceB.vue';
+  import EntranceC from './FidsElevator.vue';
+  import WaitingTimeA from './WaitingTimeA.vue';
+  import WaitingTimeB from './WaitingTimeB.vue';
 
   const gate = ref(false);
   const checkin = ref(false);
@@ -56,6 +65,11 @@
   const arrClaim = ref(false); 
   const arrCollins = ref(false);
   const deparrCollins = ref(false);
+  const entranceA = ref(false);
+  const entranceB = ref(false);
+  const entranceC = ref(false);
+  const waitingTimeA = ref(false);
+  const waitingTimeB = ref(false);
   const ahtlogo = ref(false);
 
   const config = useRuntimeConfig()
@@ -64,7 +78,8 @@
      gate.value = false; checkin.value = false; ahtlogo.value = false; depDepCollins.value = false;
      sortingArr.value = false; sortingDep.value = false; arr85.value = false; deparrCollins.value = false;
      dep.value = false; arr.value = false; arrClaim.value = false; depLed.value = false;  depCollins.value = false;
-     arrCollins.value = false; depACollins.value = false; depBCollins.value = false; depT1In.value = false; depT1In.value = false
+     arrCollins.value = false; depACollins.value = false; depBCollins.value = false; depT1In.value = false; depT1Out.value = false;
+     entranceA.value = false; entranceB.value = false; entranceC.value = false; waitingTimeA.value = false; waitingTimeB.value = false
   };
 
 
@@ -145,6 +160,26 @@
               case 'DepArrCollins':
                   offMode();
                   deparrCollins.value = true;
+                  break;
+              case 'EntranceA':
+                  offMode();
+                  entranceA.value = true;
+                  break;
+              case 'EntranceB':
+                  offMode();
+                  entranceB.value = true;
+                  break;
+              case 'EntranceC':
+                  offMode();
+                  entranceC.value = true;
+                  break;
+              case 'WaitingTimeA':
+                  offMode();
+                  waitingTimeA.value = true;
+                  break;
+              case 'WaitingTimeB':
+                  offMode();
+                  waitingTimeB.value = true;
                   break;
               default:
                   offMode();

@@ -4,6 +4,6 @@
   "iconDepUrl": "/logos/Icon-Departure.png",
   "iconArrUrl": "/logos/Icon-Arrival.png",
   "logoCheckinUrl": "/logos/AHT.png",
-  "bgColor": "",
+  "bgColor": "#121441",
   "textColor": "#ffffff"
 }
